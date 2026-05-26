@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
 
@@ -19,26 +19,56 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  int refreshMinutes = 1;
+  int refreshMinutes = 10;
   Timer? _timer;
 
-  String city = "Lahore";
-  String day = "Wednesday–27 October.";
+  String city = "Loading...";
+  String day = "Unknown Day";
   String temp = "--˚";
-  String tempRange = "17˚–14˚";
-  String msg = "Yes, It's raining";
-  String wind = "Wind: 11km/h";
-  String percipitation = "Percipitation: 15%";
+  String tempRange = "--˚ – --˚";
+  String msg = "Unknown";
+  String wind = "Wind: --km/h";
+  String humidity = "Humidity: --%";
+
+  Position? position;
+  double lati = 0.0;
+  double long = 0.0;
+
+  final List<String> _weekdays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+
+  final List<String> _months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
 
   List<Map<String, String>> data = [];
 
   @override
   void initState() {
     super.initState();
-    fetchWeather();
+
+    _initializeDashboard();
 
     _timer = Timer.periodic(Duration(minutes: refreshMinutes), (timer) {
-      fetchWeather();
+      _initializeDashboard();
     });
   }
 
@@ -48,25 +78,70 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
-  Future<Position> _determinePosition() async {
+  Future<void> _initializeDashboard() async {
+    final String currentDay = _getDay();
+
+    try {
+      Position currentPosition = await _getLocation();
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        currentPosition.latitude,
+        currentPosition.longitude,
+      );
+
+      String detectedCity = "Unknown Location";
+      if (placemarks.isNotEmpty) {
+        detectedCity =
+            placemarks[0].locality ?? placemarks[0].name ?? "Unknown Location";
+      }
+
+      setState(() {
+        day = currentDay;
+        position = currentPosition;
+        lati = currentPosition.latitude;
+        long = currentPosition.longitude;
+        city = detectedCity;
+      });
+
+      fetchWeather();
+    } catch (e) {
+      print("Initialization failed: $e");
+      setState(() {
+        day = currentDay;
+        city = "Permission Denied";
+      });
+    }
+  }
+
+  String _getDay() {
+    final DateTime now = DateTime.now();
+
+    int date = now.day;
+    String day = _weekdays[now.weekday - 1];
+    String month = _months[now.month - 1];
+
+    return "$day–$date $month.";
+  }
+
+  Future<Position> _getLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
+      return Future.error("Location services are disabled");
     }
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
+        return Future.error("Location permissions are denied");
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      return Future.error('Location permissions are permanently denied.');
+      return Future.error("Location permissions are permanently denied");
     }
 
     return await Geolocator.getCurrentPosition(
@@ -75,34 +150,25 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> fetchWeather() async {
+    final url = Uri.parse(
+      'https://api.open-meteo.com/v1/forecast?latitude=$lati&longitude=$long'
+      '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m'
+      '&hourly=temperature_2m,precipitation_probability,weather_code'
+      '&daily=temperature_2m_max,temperature_2m_min'
+      '&timezone=auto&forecast_days=2',
+    );
+
     try {
-      Position position = await _determinePosition();
-      double lat = position.latitude;
-      double lon = position.longitude;
-
-      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lon);
-      String detectedCity = "Unknown Location";
-      if (placemarks.isNotEmpty) {
-        detectedCity =
-            placemarks[0].locality ?? placemarks[0].name ?? "Unknown Location";
-      }
-
-      final url = Uri.parse(
-        'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon'
-        '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m'
-        '&hourly=temperature_2m,precipitation_probability,weather_code'
-        '&daily=temperature_2m_max,temperature_2m_min'
-        '&timezone=auto&forecast_days=2',
-      );
-
       final response = await http.get(url);
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
 
-        final double currentTemp = json['current']['temperature_2m'];
-        final int currentHumidity = json['current']['relative_humidity_2m'];
-        final double currentWind = json['current']['wind_speed_10m'];
-        final int currentConditionCode = json['current']['weather_code'];
+        final double currentTemp = json["current"]["temperature_2m"];
+        final int currentHumidity = json["current"]["relative_humidity_2m"];
+        final double currentWind = (json["current"]['wind_speed_10m'] as num)
+            .toDouble();
+        final int currentConditionCode = json["current"]['weather_code'];
 
         final double maxTemp = json['daily']['temperature_2m_max'][0];
         final double minTemp = json['daily']['temperature_2m_min'][0];
@@ -119,7 +185,7 @@ class _MyAppState extends State<MyApp> {
         for (int i = 0; i < hourlyTimes.length; i++) {
           DateTime parsedTime = DateTime.parse(hourlyTimes[i]);
 
-          if (parsedTime.isBefore(now.subtract(const Duration(minutes: 59)))) {
+          if (parsedTime.isBefore(now.subtract(Duration(minutes: 59)))) {
             continue;
           }
 
@@ -136,21 +202,20 @@ class _MyAppState extends State<MyApp> {
             "temp": "${(hourlyTemps[i] as num).toStringAsFixed(0)}˚",
           });
 
-          if (freshHourlyList.length == 24) {
+          if (freshHourlyList.length >= 24) {
             break;
           }
         }
 
         setState(() {
-          city = detectedCity;
           temp = "${currentTemp.toStringAsFixed(0)}˚";
           tempRange =
-              "${maxTemp.toStringAsFixed(0)}˚–${minTemp.toStringAsFixed(0)}˚";
+              "${maxTemp.toStringAsFixed(0)}˚– ${minTemp.toStringAsFixed(0)}˚";
           wind = "Wind: ${currentWind.toStringAsFixed(0)}km/h";
-          percipitation = "Percipitation: $currentHumidity%";
+          humidity = "Humidity: $currentHumidity%";
           msg = currentConditionCode >= 50
               ? "Yes, It's raining"
-              : "Enjoy your day";
+              : "Enjoy your day!";
           data = freshHourlyList;
         });
       }
@@ -188,7 +253,6 @@ class _MyAppState extends State<MyApp> {
               color: Colors.deepOrange[50],
             ),
           ),
-
           actions: [
             Padding(
               padding: EdgeInsets.only(right: 30),
@@ -223,7 +287,7 @@ class _MyAppState extends State<MyApp> {
                 msg: msg,
                 tempRange: tempRange,
                 wind: wind,
-                percipitation: percipitation,
+                humidity: humidity,
               ),
               SizedBox(height: 5),
               Text(
@@ -234,9 +298,9 @@ class _MyAppState extends State<MyApp> {
                   color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
                 ),
               ),
-              Divider(),
+              // Divider(),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -244,11 +308,12 @@ class _MyAppState extends State<MyApp> {
                       width: 75,
                       child: Text(
                         "TIME",
+                        textAlign: TextAlign.left,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
-                          color: Colors.deepOrange[50]!.withValues(alpha: 0.4),
+                          color: Colors.deepOrange[50]!.withValues(alpha: 0.60),
                         ),
                       ),
                     ),
@@ -260,7 +325,7 @@ class _MyAppState extends State<MyApp> {
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
-                          color: Colors.deepOrange[50]!.withValues(alpha: 0.4),
+                          color: Colors.deepOrange[50]!.withValues(alpha: 0.60),
                         ),
                       ),
                     ),
@@ -272,7 +337,7 @@ class _MyAppState extends State<MyApp> {
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
-                          color: Colors.deepOrange[50]!.withValues(alpha: 0.4),
+                          color: Colors.deepOrange[50]!.withValues(alpha: 0.60),
                         ),
                       ),
                     ),
@@ -280,18 +345,19 @@ class _MyAppState extends State<MyApp> {
                       width: 45,
                       child: Text(
                         "TEMP",
-                        textAlign: TextAlign.end,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
-                          color: Colors.deepOrange[50]!.withValues(alpha: 0.4),
+                          color: Colors.deepOrange[50]!.withValues(alpha: 0.60),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+              Divider(),
               Expanded(
                 child: SingleChildScrollView(child: HourlyData(data: data)),
               ),
@@ -304,22 +370,22 @@ class _MyAppState extends State<MyApp> {
 }
 
 class AtGlance extends StatelessWidget {
-  final String city;
-  final String day;
-  final String temp;
-  final String tempRange;
-  final String msg;
-  final String wind;
-  final String percipitation;
+  String city;
+  String day;
+  String temp;
+  String tempRange;
+  String msg;
+  String wind;
+  String humidity;
 
-  const AtGlance({
+  AtGlance({
     required this.city,
     required this.day,
     required this.temp,
     required this.tempRange,
     required this.msg,
     required this.wind,
-    required this.percipitation,
+    required this.humidity,
     super.key,
   });
 
@@ -387,7 +453,7 @@ class AtGlance extends StatelessWidget {
               ),
             ),
             Text(
-              percipitation,
+              humidity,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 20,
@@ -402,15 +468,20 @@ class AtGlance extends StatelessWidget {
 }
 
 class HourlyData extends StatelessWidget {
-  final List<Map<String, String>> data;
+  final List<Map<String, String>>? data;
+
   const HourlyData({required this.data, super.key});
 
   @override
   Widget build(BuildContext context) {
+    if (data == null || data!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var hourData in data) ...[
+        for (var hourData in data!) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.5),
             child: Row(
