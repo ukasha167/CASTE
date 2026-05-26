@@ -17,143 +17,192 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
- int refreshMinutes = 1;
- Timer? _timer;
+  int refreshMinutes = 1;
+  Timer? _timer;
 
- String city = "Lahore";
- String day = "Wednesday–27 October.";
- String temp = "--˚";
- String tempRange = "17˚–14˚";
- String msg = "Yes, It's raining";
- String wind = "Wind: 11km/h";
- String percipitation = "Percipitation: 15%";
+  String city = "Lahore";
+  String day = "Wednesday–27 October.";
+  String temp = "--˚";
+  String tempRange = "17˚–14˚";
+  String msg = "Yes, It's raining";
+  String wind = "Wind: 11km/h";
+  String percipitation = "Percipitation: 15%";
 
- List<Map<String, String>> data = [
-   {"time": "12 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
-   {"time": "01 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
-   {"time": "02 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
-   {"time": "03 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
-   {"time": "04 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
-   {"time": "05 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
-   {"time": "06 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
-   {"time": "07 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
-   {"time": "08 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
-   {"time": "09 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
+  List<Map<String, String>> data = [
+    {"time": "12 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
+    {"time": "01 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
+    {"time": "02 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
+    {"time": "03 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
+    {"time": "04 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
+    {"time": "05 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
+    {"time": "06 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
+    {"time": "07 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
+    {"time": "08 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
+    {"time": "09 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
+  ];
 
- ];
+  @override
+  void initState() {
+    super.initState();
+    fetchWeather();
 
- @override
- void initState() {
-   super.initState();
-   fetchWeather();
+    _timer = Timer.periodic(Duration(minutes: refreshMinutes), (timer) {
+      fetchWeather();
+    });
+  }
 
-   _timer = Timer.periodic(Duration(minutes: refreshMinutes), (timer) {
-     fetchWeather();
-   });
- }
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
- @override
- void dispose() {
-   _timer?.cancel();
-   super.dispose();
- }
+  Future<void> fetchWeather() async {
+    final url = Uri.parse(
+      'https://api.open-meteo.com/v1/forecast?latitude=31.55&longitude=74.35'
+      '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m'
+      '&hourly=temperature_2m,precipitation_probability,weather_code'
+      '&daily=temperature_2m_max,temperature_2m_min'
+      '&timezone=auto&forecast_days=1',
+    );
 
- Future<void> fetchWeather() async {
-   final url = Uri.parse(
-     'https://api.open-meteo.com/v1/forecast?latitude=31.55&longitude=74.35&current=temperature_2m',
-   );
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> json = jsonDecode(response.body);
 
-   try {
-     final response = await http.get(url);
+        final double currentTemp = json['current']['temperature_2m'];
+        final int currentHumidity = json['current']['relative_humidity_2m'];
+        final double currentWind = json['current']['wind_speed_10m'];
+        final int currentConditionCode = json['current']['weather_code'];
 
-     if (response.statusCode == 200) {
-       final Map<String, dynamic> data = jsonDecode(response.body);
-       final double currentTemp = data["current"]["temperature_2m"];
+        final double maxTemp = json['daily']['temperature_2m_max'][0];
+        final double minTemp = json['daily']['temperature_2m_min'][0];
 
-       setState(() {
-         temp = "${currentTemp.toStringAsFixed(0)}˚";
-       });
-     }
-   } catch (e) {
-     print("Error fetching weather: $e");
-   }
- }
+        final List<dynamic> hourlyTimes = json['hourly']['time'];
+        final List<dynamic> hourlyTemps = json['hourly']['temperature_2m'];
+        final List<dynamic> hourlyPrecip =
+            json['hourly']['precipitation_probability'];
+        final List<dynamic> hourlyCodes = json['hourly']['weather_code'];
 
- @override
- Widget build(BuildContext context) {
-   return MaterialApp(
-     debugShowCheckedModeBanner: false,
-     theme: ThemeData(
-       scaffoldBackgroundColor: Color.fromARGB(255, 6, 68, 255),
-     ),
-     home: Scaffold(
-       appBar: AppBar(
-         backgroundColor: Colors.transparent,
-         elevation: 0,
-         leadingWidth: 75,
-         leading: Padding(
-           padding: EdgeInsetsGeometry.only(left: 25),
-           child: IconButton(
-             onPressed: () {},
-             icon: Icon(Icons.menu, size: 26, weight: 700),
-             color: Colors.deepOrange[50],
-           ),
-         ),
+        List<Map<String, String>> freshHourlyList = [];
 
-         actions: [
-           Padding(
-             padding: EdgeInsets.only(right: 30),
-             child: IconButton(
-               onPressed: () {},
-               icon: Icon(Icons.search, size: 26, weight: 700),
-               color: Colors.deepOrange[50],
-             ),
-           ),
-         ],
-         actionsPadding: EdgeInsets.zero,
-         bottom: PreferredSize(
-           preferredSize: Size.fromHeight(10),
-           child: Divider(indent: 30, endIndent: 30),
-         ),
-       ),
-       body: Padding(
-         padding: EdgeInsetsGeometry.only(
-           left: 30,
-           top: 30,
-           right: 30,
-           bottom: 30,
-         ),
-         child: Column(
-           spacing: 10,
-           crossAxisAlignment: CrossAxisAlignment.start,
-           children: [
-             AtGlance(
-               city: city,
-               day: day,
-               temp: temp,
-               msg: msg,
-               tempRange: tempRange,
-               wind: wind,
-               percipitation: percipitation,
+        for (int i = 0; i < 12; i++) {
+          DateTime parsedTime = DateTime.parse(hourlyTimes[i]);
+          int hourNum = parsedTime.hour;
+          String amPm = hourNum >= 12 ? "Pm" : "Am";
+          int displayHour = hourNum % 12 == 0 ? 12 : hourNum % 12;
+          String formattedTime =
+              "${displayHour.toString().padLeft(2, '0')} $amPm";
 
-             ),
-             SizedBox(height: 5),
-             Text(
-               "Hourly",
-               style: TextStyle(
-                 fontWeight: FontWeight.bold,
-                 fontSize: 20,
-                 color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
-               ),
-             ),
-             Divider(),
-             Expanded(child: SingleChildScrollView(child: HourlyData())),
-           ],
-         ),
-       ),
-     ),
-   );
- }
+          freshHourlyList.add({
+            "time": formattedTime,
+            "weather": _mapWeatherCode(hourlyCodes[i]),
+            "precip": "• ${hourlyPrecip[i]}%",
+            "temp": "${(hourlyTemps[i] as num).toStringAsFixed(0)}˚",
+          });
+        }
+
+        setState(() {
+          temp = "${currentTemp.toStringAsFixed(0)}˚";
+          tempRange =
+              "${maxTemp.toStringAsFixed(0)}˚–${minTemp.toStringAsFixed(0)}˚";
+          wind = "Wind: ${currentWind.toStringAsFixed(0)}km/h";
+          percipitation = "Percipitation: $currentHumidity%";
+          msg = currentConditionCode >= 50
+              ? "Yes, It's raining"
+              : "Enjoy your day";
+          data = freshHourlyList;
+        });
+      }
+    } catch (e) {
+      print("Error fetching weather: $e");
+    }
+  }
+
+  String _mapWeatherCode(int code) {
+    if (code == 0) return "Sunny";
+    if (code >= 1 && code <= 3) return "Cloudy";
+    if (code >= 45 && code <= 48) return "Foggy";
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82))
+      return "Rainy";
+    return "Cloudy";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: Color.fromARGB(255, 6, 68, 255),
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leadingWidth: 75,
+          leading: Padding(
+            padding: EdgeInsetsGeometry.only(left: 25),
+            child: IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.menu, size: 26, weight: 700),
+              color: Colors.deepOrange[50],
+            ),
+          ),
+
+          actions: [
+            Padding(
+              padding: EdgeInsets.only(right: 30),
+              child: IconButton(
+                onPressed: () {},
+                icon: Icon(Icons.search, size: 26, weight: 700),
+                color: Colors.deepOrange[50],
+              ),
+            ),
+          ],
+          actionsPadding: EdgeInsets.zero,
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(10),
+            child: Divider(indent: 30, endIndent: 30),
+          ),
+        ),
+        body: Padding(
+          padding: EdgeInsetsGeometry.only(
+            left: 30,
+            top: 30,
+            right: 30,
+            bottom: 30,
+          ),
+          child: Column(
+            spacing: 10,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AtGlance(
+                city: city,
+                day: day,
+                temp: temp,
+                msg: msg,
+                tempRange: tempRange,
+                wind: wind,
+                percipitation: percipitation,
+              ),
+              SizedBox(height: 5),
+              Text(
+                "Hourly",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
+                ),
+              ),
+              Divider(),
+              Expanded(child: SingleChildScrollView(child: HourlyData())),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class AtGlance extends StatelessWidget {
