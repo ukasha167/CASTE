@@ -63,7 +63,7 @@ class _MyAppState extends State<MyApp> {
       '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m'
       '&hourly=temperature_2m,precipitation_probability,weather_code'
       '&daily=temperature_2m_max,temperature_2m_min'
-      '&timezone=auto&forecast_days=1',
+      '&timezone=auto&forecast_days=2',
     );
 
     try {
@@ -86,9 +86,15 @@ class _MyAppState extends State<MyApp> {
         final List<dynamic> hourlyCodes = json['hourly']['weather_code'];
 
         List<Map<String, String>> freshHourlyList = [];
+        DateTime now = DateTime.now();
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < hourlyTimes.length; i++) {
           DateTime parsedTime = DateTime.parse(hourlyTimes[i]);
+
+          if (parsedTime.isBefore(now.subtract(const Duration(minutes: 59)))) {
+            continue;
+          }
+
           int hourNum = parsedTime.hour;
           String amPm = hourNum >= 12 ? "Pm" : "Am";
           int displayHour = hourNum % 12 == 0 ? 12 : hourNum % 12;
@@ -101,6 +107,10 @@ class _MyAppState extends State<MyApp> {
             "precip": "• ${hourlyPrecip[i]}%",
             "temp": "${(hourlyTemps[i] as num).toStringAsFixed(0)}˚",
           });
+
+          if (freshHourlyList.length == 24) {
+            break;
+          }
         }
 
         setState(() {
