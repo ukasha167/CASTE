@@ -196,7 +196,39 @@ class _MyAppState extends State<MyApp> {
                 ),
               ),
               Divider(),
-              Expanded(child: SingleChildScrollView(child: HourlyData())),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(
+                      width: 75,
+                      child: Icon(Icons.access_time, size: 18, color: Colors.deepOrange[50]!.withValues(alpha: 0.5)),
+                    ),
+                    SizedBox(
+                      width: 80,
+                      child: Icon(Icons.wb_sunny_outlined, size: 18, color: Colors.deepOrange[50]!.withValues(alpha: 0.5)),
+                    ),
+                    SizedBox(
+                      width: 70,
+                      child: Icon(Icons.water_drop, size: 18, color: Colors.deepOrange[50]!.withValues(alpha: 0.5)), // Clarifies the % column!
+                    ),
+                    SizedBox(
+                      width: 45,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Icon(Icons.thermostat, size: 18, color: Colors.deepOrange[50]!.withValues(alpha: 0.5)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  child: HourlyData(),
+                ),
+              ),
             ],
           ),
         ),
