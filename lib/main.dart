@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -15,25 +16,51 @@ class MyApp extends StatefulWidget {
   }
 }
 
-class _MyAppState extends State<StatefulWidget> {
+class _MyAppState extends State<MyApp> {
   int refreshMinutes = 1;
+  Timer? _timer;
 
   String city = "Lahore";
   String day = "Wednesday–27 October.";
-  String temp = "20˚";
+  String temp = "--˚";
   String tempRange = "17˚–14˚";
   String msg = "Yes, It's raining";
   String wind = "Wind: 11km/h";
   String percipitation = "Percipitation: 15%";
+
+  @override
+  void initState() {
+    super.initState();
+    fetchWeather();
+
+    _timer = Timer.periodic(Duration(minutes: refreshMinutes), (timer) {
+      fetchWeather();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   Future<void> fetchWeather() async {
     final url = Uri.parse(
       'https://api.open-meteo.com/v1/forecast?latitude=31.55&longitude=74.35&current=temperature_2m',
     );
 
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      temp = "24";
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final double currentTemp = data['current']['temperature_2m'];
+
+        setState(() {
+          temp = "${currentTemp.toStringAsFixed(0)}˚";
+        });
+      }
+    } catch (e) {
+      print("Error fetching weather: $e");
     }
   }
 
