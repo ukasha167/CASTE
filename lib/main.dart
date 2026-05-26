@@ -197,37 +197,64 @@ class _MyAppState extends State<MyApp> {
               ),
               Divider(),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
                       width: 75,
-                      child: Icon(Icons.access_time, size: 18, color: Colors.deepOrange[50]!.withValues(alpha: 0.5)),
+                      child: Text(
+                        "TIME",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: Colors.deepOrange[50]!.withValues(alpha: 0.4),
+                        ),
+                      ),
                     ),
                     SizedBox(
                       width: 80,
-                      child: Icon(Icons.wb_sunny_outlined, size: 18, color: Colors.deepOrange[50]!.withValues(alpha: 0.5)),
+                      child: Text(
+                        "FORECAST",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: Colors.deepOrange[50]!.withValues(alpha: 0.4),
+                        ),
+                      ),
                     ),
                     SizedBox(
                       width: 70,
-                      child: Icon(Icons.water_drop, size: 18, color: Colors.deepOrange[50]!.withValues(alpha: 0.5)), // Clarifies the % column!
+                      child: Text(
+                        "RAIN %",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: Colors.deepOrange[50]!.withValues(alpha: 0.4),
+                        ),
+                      ),
                     ),
                     SizedBox(
                       width: 45,
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Icon(Icons.thermostat, size: 18, color: Colors.deepOrange[50]!.withValues(alpha: 0.5)),
+                      child: Text(
+                        "TEMP",
+                        textAlign: TextAlign.end,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: Colors.deepOrange[50]!.withValues(alpha: 0.4),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-
               Expanded(
-                child: SingleChildScrollView(
-                  child: HourlyData(),
-                ),
+                child: SingleChildScrollView(child: HourlyData(data: data)),
               ),
             ],
           ),
@@ -336,27 +363,15 @@ class AtGlance extends StatelessWidget {
 }
 
 class HourlyData extends StatelessWidget {
-  const HourlyData({super.key});
+  final List<Map<String, String>> data;
+  const HourlyData({required this.data, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> mockHours = [
-      {"time": "12 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
-      {"time": "01 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
-      {"time": "02 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
-      {"time": "03 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
-      {"time": "04 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
-      {"time": "05 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
-      {"time": "06 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
-      {"time": "07 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
-      {"time": "08 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
-      {"time": "09 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var hourData in mockHours) ...[
+        for (var hourData in data) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.5),
             child: Row(
