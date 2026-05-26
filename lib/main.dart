@@ -199,6 +199,11 @@ class HourlyData extends StatelessWidget {
       {"time": "02 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
       {"time": "03 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
       {"time": "04 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
+      {"time": "05 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
+      {"time": "06 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
+      {"time": "07 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
+      {"time": "08 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
+      {"time": "09 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
     ];
 
     return Column(
@@ -206,40 +211,51 @@ class HourlyData extends StatelessWidget {
       children: [
         for (var hourData in mockHours) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 6.5),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  hourData["time"]!,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
-                    color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                Expanded(
+                  child: Text(
+                    hourData["time"]!,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
-                Text(
-                  hourData["weather"]!,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
-                    color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                Expanded(
+                  child: Text(
+                    hourData["weather"]!,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
-                Text(
-                  hourData["precip"]!,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
-                    color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+
+                Expanded(
+                  child: Text(
+                    hourData["precip"]!,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
-                Text(
-                  hourData["temp"]!,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
-                    color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+
+                Expanded(
+                  child: Text(
+                    hourData["temp"]!,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
               ],
