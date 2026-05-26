@@ -215,9 +215,11 @@ class HourlyData extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 75,
                   child: Text(
                     hourData["time"]!,
+                    textAlign: TextAlign.start,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 20,
@@ -225,9 +227,11 @@ class HourlyData extends StatelessWidget {
                     ),
                   ),
                 ),
-                Expanded(
+                SizedBox(
+                  width: 80,
                   child: Text(
                     hourData["weather"]!,
+                    textAlign: TextAlign.start,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 20,
@@ -235,10 +239,11 @@ class HourlyData extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                Expanded(
+                SizedBox(
+                  width: 70,
                   child: Text(
                     hourData["precip"]!,
+                    textAlign: TextAlign.start,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 20,
@@ -246,8 +251,8 @@ class HourlyData extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                Expanded(
+                SizedBox(
+                  width: 45,
                   child: Text(
                     hourData["temp"]!,
                     textAlign: TextAlign.end,
