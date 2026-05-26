@@ -1,19 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:async';
 
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  final String _city = "Lahore";
-  final String _day = "Wednesday–27 October.";
-  final String _temp = "20˚";
-  final String _tempRange = "17˚–14˚";
-  final String _msg = "Yes, It's raining";
-  final String _wind = "Wind: 11km/h";
-  final String _percipitation = "Percipitation: 15%";
-
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<StatefulWidget> createState() {
+    return _MyAppState();
+  }
+}
+
+class _MyAppState extends State<StatefulWidget> {
+  int refreshMinutes = 1;
+
+  String city = "Lahore";
+  String day = "Wednesday–27 October.";
+  String temp = "20˚";
+  String tempRange = "17˚–14˚";
+  String msg = "Yes, It's raining";
+  String wind = "Wind: 11km/h";
+  String percipitation = "Percipitation: 15%";
+
+  Future<void> fetchWeather() async {
+    final url = Uri.parse(
+      'https://api.open-meteo.com/v1/forecast?latitude=31.55&longitude=74.35&current=temperature_2m',
+    );
+
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      temp = "24";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,13 +85,13 @@ class MyApp extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AtGlance(
-                city: _city,
-                day: _day,
-                temp: _temp,
-                msg: _msg,
-                tempRange: _tempRange,
-                wind: _wind,
-                percipitation: _percipitation,
+                city: city,
+                day: day,
+                temp: temp,
+                msg: msg,
+                tempRange: tempRange,
+                wind: wind,
+                percipitation: percipitation,
               ),
               SizedBox(height: 5),
               Text(
