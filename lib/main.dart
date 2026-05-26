@@ -19,7 +19,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  int refreshMinutes = 10;
+  int refreshMinutes = 30;
   Timer? _timer;
 
   String city = "Loading...";
@@ -61,28 +61,9 @@ class _MyAppState extends State<MyApp> {
 
   List<Map<String, String>> data = [];
 
-  @override
-  void initState() {
-    super.initState();
-
-    _initializeDashboard();
-
-    _timer = Timer.periodic(Duration(minutes: refreshMinutes), (timer) {
-      _initializeDashboard();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _initializeDashboard() async {
-    final String currentDay = _getDay();
-
+  Future<void> _getLocation() async {
     try {
-      Position currentPosition = await _getLocation();
+      Position currentPosition = await _getPosition();
 
       List<Placemark> placemarks = await placemarkFromCoordinates(
         currentPosition.latitude,
@@ -96,21 +77,39 @@ class _MyAppState extends State<MyApp> {
       }
 
       setState(() {
-        day = currentDay;
         position = currentPosition;
         lati = currentPosition.latitude;
         long = currentPosition.longitude;
         city = detectedCity;
       });
 
-      fetchWeather();
+      _fetchWeather();
     } catch (e) {
       print("Initialization failed: $e");
       setState(() {
-        day = currentDay;
         city = "Permission Denied";
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      day = _getDay();
+    });
+
+    _getLocation();
+
+    _timer = Timer.periodic(Duration(minutes: refreshMinutes), (timer) {
+      _getLocation();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   String _getDay() {
@@ -123,7 +122,7 @@ class _MyAppState extends State<MyApp> {
     return "$day–$date $month.";
   }
 
-  Future<Position> _getLocation() async {
+  Future<Position> _getPosition() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -149,7 +148,7 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Future<void> fetchWeather() async {
+  Future<void> _fetchWeather() async {
     final url = Uri.parse(
       'https://api.open-meteo.com/v1/forecast?latitude=$lati&longitude=$long'
       '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m'
@@ -225,20 +224,28 @@ class _MyAppState extends State<MyApp> {
   }
 
   String _mapWeatherCode(int code) {
-    if (code == 0) return "Sunny";
-    if (code >= 1 && code <= 3) return "Cloudy";
-    if (code >= 45 && code <= 48) return "Foggy";
-    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82))
+    if (code == 0) {
+      return "Sunny";
+    }
+    if (code >= 1 && code <= 3) {
+      return "Cloudy";
+    }
+    if (code >= 45 && code <= 48) {
+      return "Foggy";
+    }
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
       return "Rainy";
+    }
     return "Cloudy";
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: "Weather",
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: Color.fromARGB(255, 6, 68, 255),
+        scaffoldBackgroundColor: Color.fromARGB(255, 6, 68, 225),
       ),
       home: Scaffold(
         appBar: AppBar(
@@ -294,7 +301,7 @@ class _MyAppState extends State<MyApp> {
                 "Hourly",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 21,
                   color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
                 ),
               ),
@@ -359,7 +366,10 @@ class _MyAppState extends State<MyApp> {
               ),
               Divider(),
               Expanded(
-                child: SingleChildScrollView(child: HourlyData(data: data)),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: HourlyData(data: data),
+                ),
               ),
             ],
           ),
@@ -370,15 +380,15 @@ class _MyAppState extends State<MyApp> {
 }
 
 class AtGlance extends StatelessWidget {
-  String city;
-  String day;
-  String temp;
-  String tempRange;
-  String msg;
-  String wind;
-  String humidity;
+  final String city;
+  final String day;
+  final String temp;
+  final String tempRange;
+  final String msg;
+  final String wind;
+  final String humidity;
 
-  AtGlance({
+  const AtGlance({
     required this.city,
     required this.day,
     required this.temp,
@@ -468,20 +478,20 @@ class AtGlance extends StatelessWidget {
 }
 
 class HourlyData extends StatelessWidget {
-  final List<Map<String, String>>? data;
+  final List<Map<String, String>> data;
 
   const HourlyData({required this.data, super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (data == null || data!.isEmpty) {
+    if (data.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var hourData in data!) ...[
+        for (var hourData in data) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.5),
             child: Row(
