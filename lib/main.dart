@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -28,18 +30,7 @@ class _MyAppState extends State<MyApp> {
   String wind = "Wind: 11km/h";
   String percipitation = "Percipitation: 15%";
 
-  List<Map<String, String>> data = [
-    {"time": "12 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
-    {"time": "01 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
-    {"time": "02 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
-    {"time": "03 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
-    {"time": "04 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
-    {"time": "05 Am", "weather": "Rainy", "precip": "• 75%", "temp": "13˚"},
-    {"time": "06 Am", "weather": "Rainy", "precip": "• 53%", "temp": "14˚"},
-    {"time": "07 Am", "weather": "Cloudy", "precip": "• 14%", "temp": "15˚"},
-    {"time": "08 Am", "weather": "Sunny", "precip": "• 7%", "temp": "16˚"},
-    {"time": "09 Am", "weather": "Cloudy", "precip": "• 86%", "temp": "14˚"},
-  ];
+  List<Map<String, String>> data = [];
 
   @override
   void initState() {
@@ -57,16 +48,53 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
-  Future<void> fetchWeather() async {
-    final url = Uri.parse(
-      'https://api.open-meteo.com/v1/forecast?latitude=31.55&longitude=74.35'
-      '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m'
-      '&hourly=temperature_2m,precipitation_probability,weather_code'
-      '&daily=temperature_2m_max,temperature_2m_min'
-      '&timezone=auto&forecast_days=2',
-    );
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
 
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permissions are permanently denied.');
+    }
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.low,
+    );
+  }
+
+  Future<void> fetchWeather() async {
     try {
+      Position position = await _determinePosition();
+      double lat = position.latitude;
+      double lon = position.longitude;
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lon);
+      String detectedCity = "Unknown Location";
+      if (placemarks.isNotEmpty) {
+        detectedCity =
+            placemarks[0].locality ?? placemarks[0].name ?? "Unknown Location";
+      }
+
+      final url = Uri.parse(
+        'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon'
+        '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m'
+        '&hourly=temperature_2m,precipitation_probability,weather_code'
+        '&daily=temperature_2m_max,temperature_2m_min'
+        '&timezone=auto&forecast_days=2',
+      );
+
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
@@ -114,6 +142,7 @@ class _MyAppState extends State<MyApp> {
         }
 
         setState(() {
+          city = detectedCity;
           temp = "${currentTemp.toStringAsFixed(0)}˚";
           tempRange =
               "${maxTemp.toStringAsFixed(0)}˚–${minTemp.toStringAsFixed(0)}˚";
