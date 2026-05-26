@@ -70,7 +70,7 @@ class _MyAppState extends State<MyApp> {
     }
 
     return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.low,
+      locationSettings: LocationSettings(accuracy: LocationAccuracy.low),
     );
   }
 
