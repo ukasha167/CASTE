@@ -208,77 +208,113 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leadingWidth: 75,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 25),
+    final myAppBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leadingWidth: 75,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 25),
+        child: IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.menu, size: 26, weight: 700),
+          color: Colors.deepOrange[50],
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 30),
           child: IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.menu, size: 26, weight: 700),
+            icon: const Icon(Icons.search, size: 26, weight: 700),
             color: Colors.deepOrange[50],
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 30),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.search, size: 26, weight: 700),
-              color: Colors.deepOrange[50],
-            ),
-          ),
-        ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(10),
-          child: Divider(indent: 30, endIndent: 30),
-        ),
+      ],
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(10),
+        child: Divider(indent: 30, endIndent: 30),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(30),
+    );
+
+    final screenHeight = MediaQuery.of(context).size.height;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final availableHeight =
+        screenHeight - myAppBar.preferredSize.height - statusBarHeight;
+
+    return Scaffold(
+      appBar: myAppBar,
+
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
-          spacing: 10,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AtGlance(
-              city: city,
-              day: day,
-              temp: temp,
-              msg: msg,
-              tempRange: tempRange,
-              wind: wind,
-              humidity: humidity,
-            ),
-            const SizedBox(height: 5),
-            Text(
-              "Hourly",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 21,
-                color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
+            SizedBox(
+              height: availableHeight,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                child: Column(
+                  children: [
+                    Expanded(
+                      flex: 60,
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: AtGlance(
+                            city: city,
+                            day: day,
+                            temp: temp,
+                            msg: msg,
+                            tempRange: tempRange,
+                            wind: wind,
+                            humidity: humidity,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    Expanded(
+                      flex: 40,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Hourly",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 21,
+                              color: Colors.deepOrange[50]!.withValues(
+                                alpha: 0.85,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _headerText("TIME", 75, TextAlign.left),
+                              _headerText("FORECAST", 80, TextAlign.left),
+                              _headerText("RAIN %", 70, TextAlign.left),
+                              _headerText("TEMP", 45, TextAlign.center),
+                            ],
+                          ),
+                          const Divider(),
+
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: HourlyData(data: data),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _headerText("TIME", 75, TextAlign.left),
-                  _headerText("FORECAST", 80, TextAlign.left),
-                  _headerText("RAIN %", 70, TextAlign.left),
-                  _headerText("TEMP", 45, TextAlign.center),
-                ],
-              ),
-            ),
-            const Divider(),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: HourlyData(data: data),
-              ),
-            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
