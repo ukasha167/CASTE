@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HourlyData extends StatelessWidget {
   final List<Map<String, String>> data;
@@ -28,10 +29,10 @@ class HourlyData extends StatelessWidget {
                   child: Text(
                     hourData["time"]!,
                     textAlign: TextAlign.start,
-                    style: TextStyle(
+                    style: GoogleFonts.montserrat(
                       fontWeight: FontWeight.w600,
                       fontSize: rowFontSize,
-                      color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                      color: Colors.deepOrange[50]!.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -40,10 +41,10 @@ class HourlyData extends StatelessWidget {
                   child: Text(
                     hourData["weather"]!,
                     textAlign: TextAlign.start,
-                    style: TextStyle(
+                    style: GoogleFonts.montserrat(
                       fontWeight: FontWeight.w600,
                       fontSize: rowFontSize,
-                      color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                      color: Colors.deepOrange[50]!.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -52,10 +53,10 @@ class HourlyData extends StatelessWidget {
                   child: Text(
                     hourData["precip"]!,
                     textAlign: TextAlign.start,
-                    style: TextStyle(
+                    style: GoogleFonts.montserrat(
                       fontWeight: FontWeight.w600,
                       fontSize: rowFontSize,
-                      color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                      color: Colors.deepOrange[50]!.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -64,10 +65,10 @@ class HourlyData extends StatelessWidget {
                   child: Text(
                     hourData["temp"]!,
                     textAlign: TextAlign.end,
-                    style: TextStyle(
+                    style: GoogleFonts.montserrat(
                       fontWeight: FontWeight.w600,
                       fontSize: rowFontSize,
-                      color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
+                      color: Colors.deepOrange[50]!.withValues(alpha: 0.7),
                     ),
                   ),
                 ),

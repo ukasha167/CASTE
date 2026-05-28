@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -42,18 +44,18 @@ class _HomeScreenState extends State<HomeScreen> {
     "Sunday",
   ];
   final List<String> _months = [
-    "January",
-    "February",
-    "March",
-    "April",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
     "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
 
   List<Map<String, String>> data = [];
@@ -287,10 +289,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             "Hourly",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize:
-                                  MediaQuery.of(context).size.width * 0.055,
+                            style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w600,
+                              fontSize: MediaQuery.of(context).size.width * 0.055,
                               color: Colors.deepOrange[50]!.withValues(
                                 alpha: 0.85,
                               ),
@@ -365,11 +366,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Text(
         title,
         textAlign: align,
-        style: TextStyle(
+        style: GoogleFonts.montserrat(
           fontSize: screenWidth * 0.026,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           letterSpacing: 1.5,
-          color: Colors.deepOrange[50]!.withValues(alpha: 0.60),
+          color: Colors.deepOrange[50]!.withValues(alpha: 0.7),
         ),
       ),
     );

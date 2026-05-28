@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AtGlance extends StatelessWidget {
   final String city;
@@ -36,27 +37,29 @@ class AtGlance extends StatelessWidget {
           children: [
             Text(
               city,
-              style: TextStyle(
+              style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w800,
                 fontSize: screenWidth * 0.09,
+                color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
+                letterSpacing: 5,
+              ),
+            ),
+            Text(
+              day,
+              style: GoogleFonts.montserrat(
+                fontWeight: FontWeight.w700,
+                fontSize: screenWidth * 0.055,
                 color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
                 letterSpacing: 3,
               ),
             ),
             Text(
-              day,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: screenWidth * 0.055,
-                color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
-              ),
-            ),
-            Text(
               temp,
-              style: TextStyle(
+              style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w900,
                 fontSize: screenHeight * 0.23,
                 color: Colors.deepOrange[50],
+                letterSpacing: 1,
                 height: 1.0,
               ),
             ),
@@ -65,7 +68,7 @@ class AtGlance extends StatelessWidget {
               children: [
                 Text(
                   msg,
-                  style: TextStyle(
+                  style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w700,
                     fontSize: screenWidth * 0.055,
                     color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
@@ -73,7 +76,7 @@ class AtGlance extends StatelessWidget {
                 ),
                 Text(
                   tempRange,
-                  style: TextStyle(
+                  style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w500,
                     fontSize: screenWidth * 0.048,
                     color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
@@ -86,7 +89,7 @@ class AtGlance extends StatelessWidget {
               children: [
                 Text(
                   wind,
-                  style: TextStyle(
+                  style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w500,
                     fontSize: screenWidth * 0.048,
                     color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
@@ -94,7 +97,7 @@ class AtGlance extends StatelessWidget {
                 ),
                 Text(
                   humidity,
-                  style: TextStyle(
+                  style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w500,
                     fontSize: screenWidth * 0.048,
                     color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
