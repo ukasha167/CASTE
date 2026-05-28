@@ -242,8 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     final statusBarHeight = MediaQuery.of(context).padding.top;
-    final availableHeight = screenHeight - myAppBar.preferredSize.height - statusBarHeight;
-    final peekHeight = 80.0;
+    final availableHeight = (screenHeight - myAppBar.preferredSize.height - statusBarHeight) - 145.0;
 
     return Scaffold(
       appBar: myAppBar,
@@ -254,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              height: availableHeight - peekHeight,
+              height: availableHeight,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 30,
@@ -263,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Expanded(
-                      flex: 53,
+                      flex: 57,
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: SizedBox(
@@ -282,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
 
                     Expanded(
-                      flex: 47,
+                      flex: 43,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
