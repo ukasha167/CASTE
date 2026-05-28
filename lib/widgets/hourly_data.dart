@@ -12,7 +12,7 @@ class HourlyData extends StatelessWidget {
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final rowFontSize = screenWidth * 0.048;
+    final rowFontSize = screenWidth * 0.042;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
