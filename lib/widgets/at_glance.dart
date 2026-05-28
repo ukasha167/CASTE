@@ -22,78 +22,89 @@ class AtGlance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      spacing: 10,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          city,
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 38,
-            color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
-            letterSpacing: 3,
-          ),
-        ),
-        Text(
-          day,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
-          ),
-        ),
-        Text(
-          temp,
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 185,
-            color: Colors.deepOrange[50],
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.topLeft,
+      child: SizedBox(
+        width: screenWidth,
+        child: Column(
+          spacing: screenHeight * 0.01,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              msg,
+              city,
               style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                fontSize: screenWidth * 0.09,
+                color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
+                letterSpacing: 3,
+              ),
+            ),
+            Text(
+              day,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: screenWidth * 0.055,
                 color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
               ),
             ),
             Text(
-              tempRange,
+              temp,
               style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 20,
-                color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
+                fontWeight: FontWeight.w900,
+                fontSize: screenHeight * 0.23,
+                color: Colors.deepOrange[50],
+                height: 1.0,
               ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  msg,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: screenWidth * 0.055,
+                    color: Colors.deepOrange[50]!.withValues(alpha: 0.85),
+                  ),
+                ),
+                Text(
+                  tempRange,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: screenWidth * 0.048,
+                    color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  wind,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: screenWidth * 0.048,
+                    color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
+                  ),
+                ),
+                Text(
+                  humidity,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: screenWidth * 0.048,
+                    color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              wind,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 20,
-                color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
-              ),
-            ),
-            Text(
-              humidity,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 20,
-                color: Colors.deepOrange[50]!.withValues(alpha: 0.8),
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 }
