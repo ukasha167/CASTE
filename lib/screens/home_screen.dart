@@ -208,6 +208,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    if (screenHeight <= 0) {
+      return const Scaffold();
+    }
+
     final myAppBar = AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -236,10 +241,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    final screenHeight = MediaQuery.of(context).size.height;
     final statusBarHeight = MediaQuery.of(context).padding.top;
-    final availableHeight =
-        screenHeight - myAppBar.preferredSize.height - statusBarHeight;
+    final availableHeight = screenHeight - myAppBar.preferredSize.height - statusBarHeight;
+    final peekHeight = 80.0;
 
     return Scaffold(
       appBar: myAppBar,
@@ -250,13 +254,16 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              height: availableHeight,
+              height: availableHeight - peekHeight,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
+                ),
                 child: Column(
                   children: [
                     Expanded(
-                      flex: 60,
+                      flex: 53,
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: SizedBox(
@@ -275,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
 
                     Expanded(
-                      flex: 40,
+                      flex: 47,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -283,24 +290,39 @@ class _HomeScreenState extends State<HomeScreen> {
                             "Hourly",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 21,
+                              fontSize:
+                                  MediaQuery.of(context).size.width * 0.055,
                               color: Colors.deepOrange[50]!.withValues(
                                 alpha: 0.85,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              _headerText("TIME", 75, TextAlign.left),
-                              _headerText("FORECAST", 80, TextAlign.left),
-                              _headerText("RAIN %", 70, TextAlign.left),
-                              _headerText("TEMP", 45, TextAlign.center),
+                              _headerText("TIME", 75, TextAlign.left, context),
+                              _headerText(
+                                "FORECAST",
+                                80,
+                                TextAlign.left,
+                                context,
+                              ),
+                              _headerText(
+                                "RAIN %",
+                                70,
+                                TextAlign.left,
+                                context,
+                              ),
+                              _headerText(
+                                "TEMP",
+                                45,
+                                TextAlign.center,
+                                context,
+                              ),
                             ],
                           ),
                           const Divider(),
-
                           Expanded(
                             child: SingleChildScrollView(
                               physics: const BouncingScrollPhysics(),
@@ -314,6 +336,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(
+                left: 30,
+                right: 30,
+                bottom: 30,
+                top: 10,
+              ),
+              child: const DetailedMetrics(),
+            ),
+
             const SizedBox(height: 20),
           ],
         ),
@@ -321,14 +353,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _headerText(String title, double width, TextAlign align) {
+  Widget _headerText(
+    String title,
+    double width,
+    TextAlign align,
+    BuildContext context,
+  ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return SizedBox(
-      width: width,
+      width: screenWidth * (width / 412),
       child: Text(
         title,
         textAlign: align,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: screenWidth * 0.026,
           fontWeight: FontWeight.w900,
           letterSpacing: 1.5,
           color: Colors.deepOrange[50]!.withValues(alpha: 0.60),
