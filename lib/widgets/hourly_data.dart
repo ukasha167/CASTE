@@ -11,59 +11,62 @@ class HourlyData extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final rowFontSize = screenWidth * 0.048;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var hourData in data) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6.5),
+            padding: EdgeInsets.symmetric(vertical: screenWidth * 0.015),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 SizedBox(
-                  width: 75,
+                  width: screenWidth * 0.18,
                   child: Text(
                     hourData["time"]!,
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 20,
+                      fontSize: rowFontSize,
                       color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
                     ),
                   ),
                 ),
                 SizedBox(
-                  width: 80,
+                  width: screenWidth * 0.20,
                   child: Text(
                     hourData["weather"]!,
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 20,
+                      fontSize: rowFontSize,
                       color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
                     ),
                   ),
                 ),
                 SizedBox(
-                  width: 70,
+                  width: screenWidth * 0.18,
                   child: Text(
                     hourData["precip"]!,
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 20,
+                      fontSize: rowFontSize,
                       color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
                     ),
                   ),
                 ),
                 SizedBox(
-                  width: 45,
+                  width: screenWidth * 0.10,
                   child: Text(
                     hourData["temp"]!,
                     textAlign: TextAlign.end,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 20,
+                      fontSize: rowFontSize,
                       color: Colors.deepOrange[50]!.withValues(alpha: 0.75),
                     ),
                   ),
