@@ -1,17 +1,36 @@
-# weather_app
+# Weather App
 
-A new Flutter project.
+A sleek, intuitive weather forecasting companion for your daily life.
 
-## Getting Started
+## Overview
 
-This project is a starting point for a Flutter application.
+Weather App is a Flutter-based mobile application designed to provide accurate, real-time weather updates based on your current location. Built with a clean and modern user interface, the application instantly delivers vital meteorological data, helping you plan your day with confidence.
 
-A few resources to get you started if this is your first Flutter project:
+## How It Works
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+The application operates by accessing your device's location services to determine your geographical coordinates using the `geolocator` and `geocoding` packages. Once the location is established, it makes an asynchronous HTTP request to the Open-Meteo API to retrieve highly localized current and hourly weather data.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The user interface is broken down into modular components:
+- **At Glance:** Displays the current city, date, temperature, daily highs and lows, wind speed, and humidity.
+- **Hourly Data:** Provides a 24-hour forecast breakdown, showing time, expected conditions, precipitation probability, and temperature.
+- **Detailed Metrics:** Shows additional detailed weather information for the current day.
+
+All data is parsed from JSON and presented using custom typography for a beautiful, readable experience.
+
+## Roadmap
+
+### Current Features
+- [x] Automatic location detection
+- [x] Real-time current weather data fetching (Open-Meteo API)
+- [x] 24-hour hourly weather forecast
+- [x] At-a-glance weather summary (High/Low, Wind Speed, Humidity)
+- [x] Dynamic messaging based on weather conditions
+- [x] Periodic background data refreshing
+
+### Future Features
+- [ ] Manually searching the location for weather
+- [ ] Sliding menu for Settings like Celcius to Fahrenheit, etc.
+- [ ] Scroll down to refresh
+- [ ] Weather Data for future days
+- [ ] Detailed Metrics for the whole day
+- [ ] Improve Accuracy and overall performance
