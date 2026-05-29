@@ -1,9 +1,5 @@
 # Weather App
 
-A sleek, intuitive weather forecasting companion for your daily life.
-
-## Overview
-
 Weather App is a Flutter-based mobile application designed to provide accurate, real-time weather updates based on your current location. Built with a clean and modern user interface, the application instantly delivers vital meteorological data, helping you plan your day with confidence.
 
 ## How It Works
@@ -28,9 +24,9 @@ All data is parsed from JSON and presented using custom typography for a beautif
 - [x] Periodic background data refreshing
 
 ### Future Features
-- [ ] Manually searching the location for weather
-- [ ] Sliding menu for Settings like Celcius to Fahrenheit, etc.
+- [ ] Detailed Metrics for the whole day
 - [ ] Scroll down to refresh
 - [ ] Weather Data for future days
-- [ ] Detailed Metrics for the whole day
+- [ ] Manually search the location for weather
+- [ ] Sliding menu for Settings like Celcius to Fahrenheit, Refresh intervals, etc.
 - [ ] Improve Accuracy and overall performance
