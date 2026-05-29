@@ -21,6 +21,8 @@ class WeatherController extends ChangeNotifier {
   double lati = 0.0;
   double long = 0.0;
 
+  List<Map<String, String>> hourlyData = [];
+
   final List<String> _weekdays = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
   ];
@@ -28,8 +30,6 @@ class WeatherController extends ChangeNotifier {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
   ];
-
-  List<Map<String, String>> hourlyData = [];
 
   WeatherController() {
     day = _getDay();
@@ -43,6 +43,24 @@ class WeatherController extends ChangeNotifier {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  void resetFields() {
+    city = "Loading...";
+    day = "Unknown Day";
+    temp = "--˚";
+    tempRange = "--˚ – --˚";
+    msg = "Unknown";
+    wind = "Wind: --km/h";
+    humidity = "Humidity: --%";
+
+    position;
+    lati = 0.0;
+    long = 0.0;
+
+    hourlyData = [];
+
+    notifyListeners();
   }
 
   String _getDay() {
@@ -69,7 +87,13 @@ class WeatherController extends ChangeNotifier {
     );
   }
 
+  Future<void> refreshWeather() async {
+    resetFields();
+    await _getLocation();
+  }
+
   Future<void> _getLocation() async {
+    day = _getDay();
     try {
       Position currentPosition = await _getPosition();
       List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -88,7 +112,7 @@ class WeatherController extends ChangeNotifier {
       long = currentPosition.longitude;
       notifyListeners();
 
-      _fetchWeather();
+      await _fetchWeather();
     } catch (e) {
       print("Initialization failed: $e");
       city = "Permission Denied";
