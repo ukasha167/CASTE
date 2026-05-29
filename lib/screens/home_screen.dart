@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../controllers/weather_controller.dart';
 import '../widgets/at_glance.dart';
 import '../widgets/hourly_data.dart';
@@ -62,66 +63,89 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: myAppBar,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: availableHeight,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 15,
-                ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: [
+          CupertinoSliverRefreshControl(
+            onRefresh: () async {
+              await _controller.refreshWeather();
+            },
+            builder: ( context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
+                  final double opacity = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0, );
 
-                // This redraws only this specific block when API data arrives.
-                child: ListenableBuilder(
-                  listenable: _controller,
-                  builder: (context, child) {
-                    return Column(
-                      children: [
-                        Expanded(
-                          flex: 57,
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: AtGlance(
-                                city: _controller.city,
-                                day: _controller.day,
-                                temp: _controller.temp,
-                                msg: _controller.msg,
-                                tempRange: _controller.tempRange,
-                                wind: _controller.wind,
-                                humidity: _controller.humidity,
+                  return Center(
+                    child: Opacity(
+                      opacity: opacity,
+                      child: CupertinoActivityIndicator(
+                        color: Colors.deepOrange[50],
+                        radius: 15,
+                      ),
+                    ),
+                  );
+                },
+          ),
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: availableHeight,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 15,
+                    ),
+                    child: ListenableBuilder(
+                      listenable: _controller,
+                      builder: (context, child) {
+                        return Column(
+                          children: [
+                            Expanded(
+                              flex: 57,
+                              child: Align(
+                                alignment: Alignment.topLeft,
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: AtGlance(
+                                    city: _controller.city,
+                                    day: _controller.day,
+                                    temp: _controller.temp,
+                                    msg: _controller.msg,
+                                    tempRange: _controller.tempRange,
+                                    wind: _controller.wind,
+                                    humidity: _controller.humidity,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 43,
-                          child: HourlySection(data: _controller.hourlyData),
-                        ),
-                      ],
-                    );
-                  },
+                            Expanded(
+                              flex: 43,
+                              child: HourlySection(
+                                data: _controller.hourlyData,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
+                const Padding(
+                  padding: EdgeInsets.only(
+                    left: 30,
+                    right: 30,
+                    bottom: 30,
+                    top: 10,
+                  ),
+                  child: DetailedMetrics(),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
-
-            const Padding(
-              padding: EdgeInsets.only(
-                left: 30,
-                right: 30,
-                bottom: 30,
-                top: 10,
-              ),
-              child: DetailedMetrics(),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
