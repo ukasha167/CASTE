@@ -45,6 +45,34 @@ class WeatherController extends ChangeNotifier {
     super.dispose();
   }
 
+  Future<List<dynamic>> searchCities(String query) async {
+    if (query.trim().isEmpty) return [];
+
+    final url = Uri.parse(
+      'https://geocoding-api.open-meteo.com/v1/search?name=$query&count=5&language=en&format=json',
+    );
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['results'] ?? [];
+      }
+    } catch (e) {
+      print("Geocoding API Error: $e");
+    }
+    return [];
+  }
+
+  Future<void> fetchWeatherForCity( double latitude, double longitude, String cityName) async {
+    city = cityName;
+    lati = latitude;
+    long = longitude;
+
+    notifyListeners();
+    await _fetchWeather();
+  }
+
   void resetFields() {
     city = "Loading...";
     day = "Unknown Day";
