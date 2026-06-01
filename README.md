@@ -23,10 +23,10 @@ All data is parsed from JSON and presented using custom typography for a beautif
 - [x] Dynamic messaging based on weather conditions
 - [x] Periodic background data refreshing
 - [x] Pull to refresh
+- [x] Manually search the location for weather
 
 ### Future Features
 - [ ] Detailed Metrics for the whole day
 - [ ] Weather Data for future days
-- [ ] Manually search the location for weather
 - [ ] Sliding menu for Settings like Celcius to Fahrenheit, Refresh intervals, etc.
 - [ ] Improve Accuracy and overall performance
