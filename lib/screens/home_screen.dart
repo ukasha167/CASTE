@@ -5,6 +5,7 @@ import '../widgets/at_glance.dart';
 import '../widgets/hourly_data.dart';
 import '../widgets/detailed_metrics.dart';
 import '../widgets/city_search.dart';
+import '../widgets/settings_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,8 +17,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final WeatherController _controller = WeatherController();
   bool _isSearching = false;
+
+  final WeatherController _controller = WeatherController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void dispose() {
@@ -118,7 +121,9 @@ class _HomeScreenState extends State<HomeScreen> {
       leading: Padding(
         padding: const EdgeInsets.only(left: 25),
         child: IconButton(
-          onPressed: () {},
+          onPressed: () {
+            _scaffoldKey.currentState?.openDrawer();
+          },
           icon: const Icon(Icons.menu, size: 26, weight: 700),
           color: Colors.deepOrange[50],
         ),
@@ -151,7 +156,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final availableHeight = (screenHeight - myAppBar.preferredSize.height - statusBarHeight) - 145.0;
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: myAppBar,
+      drawer: ListenableBuilder(
+        listenable: _controller,
+        builder: (context, _) => SettingsDrawer(controller: _controller),
+      ),
+      // drawerScrimColor: Colors.black.withValues(alpha: 0.4),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         switchInCurve: Curves.easeOutCubic,
