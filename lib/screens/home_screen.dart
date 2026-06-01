@@ -95,11 +95,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(left: 30, right: 30, bottom: 30, top: 10),
-                child: DetailedMetrics(),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.only(left: 30, right: 30, bottom: 30, top: 10),
+                  child: ListenableBuilder(
+                    listenable: _controller,
+                    builder: (context, _) => DetailedMetrics(controller: _controller),
+                  ),
+                ),
+                const SizedBox(height: 20),
             ],
           ),
         ),
