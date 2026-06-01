@@ -40,7 +40,7 @@ class SettingsDrawer extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    "Settings",
+                    "Menu",
                     style: GoogleFonts.montserrat(
                       fontWeight: FontWeight.w800,
                       fontSize: 28,
