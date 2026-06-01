@@ -162,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
         listenable: _controller,
         builder: (context, _) => SettingsDrawer(controller: _controller),
       ),
-      // drawerScrimColor: Colors.black.withValues(alpha: 0.4),
+      drawerScrimColor: Colors.black.withValues(alpha: 0.5),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         switchInCurve: Curves.easeOutCubic,
