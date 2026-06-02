@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controllers/weather_controller.dart';
 
 class DetailedMetrics extends StatelessWidget {
-  final WeatherController controller;
+  final DailyForecast forecast;
 
-  const DetailedMetrics({required this.controller, super.key});
+  const DetailedMetrics({required this.forecast, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +30,8 @@ class DetailedMetrics extends StatelessWidget {
             Expanded(
               child: _buildSquareCard(
                 "Wind",
-                controller.windSpeedOnly,
-                controller.windUnitOnly,
+                forecast.windSpeedOnly,
+                forecast.windUnitOnly,
                 screenWidth,
               ),
             ),
@@ -39,8 +39,8 @@ class DetailedMetrics extends StatelessWidget {
             Expanded(
               child: _buildSquareCard(
                 "Pressure",
-                controller.pressure.split(' ')[0],
-                controller.pressure.split(' ')[1],
+                forecast.pressure.split(' ')[0],
+                forecast.pressure.split(' ')[1],
                 screenWidth,
               ),
             ),
@@ -53,8 +53,8 @@ class DetailedMetrics extends StatelessWidget {
             Expanded(
               child: _buildSquareCard(
                 "Visibility",
-                controller.visibility.split(' ')[0],
-                controller.visibility.split(' ')[1],
+                forecast.visibility.split(' ')[0],
+                forecast.visibility.split(' ')[1],
                 screenWidth,
               ),
             ),
@@ -62,7 +62,7 @@ class DetailedMetrics extends StatelessWidget {
             Expanded(
               child: _buildSquareCard(
                 "Cloud Cover",
-                controller.cloudCover.replaceAll('%', ''),
+                forecast.cloudCover.replaceAll('%', ''),
                 "%",
                 screenWidth,
               ),
@@ -94,7 +94,7 @@ class DetailedMetrics extends StatelessWidget {
             ),
           ),
           Text(
-            controller.aqi,
+            forecast.aqi,
             style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w900,
               fontSize: screenWidth * 0.17,
@@ -103,7 +103,7 @@ class DetailedMetrics extends StatelessWidget {
             ),
           ),
           Text(
-            controller.aqiLabel,
+            forecast.aqiLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.montserrat(
@@ -138,7 +138,7 @@ class DetailedMetrics extends StatelessWidget {
             ),
           ),
           Text(
-            controller.uv,
+            forecast.uv,
             style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w900,
               fontSize: screenWidth * 0.17,
@@ -147,7 +147,7 @@ class DetailedMetrics extends StatelessWidget {
             ),
           ),
           Text(
-            controller.uvLabel,
+            forecast.uvLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.montserrat(
@@ -239,7 +239,7 @@ class DetailedMetrics extends StatelessWidget {
             height: 60,
             width: double.infinity,
             child: CustomPaint(
-              painter: SunrisePainter(progress: controller.daylightProgress),
+              painter: SunrisePainter(progress: forecast.daylightProgress),
             ),
           ),
           const SizedBox(height: 10),
@@ -247,14 +247,14 @@ class DetailedMetrics extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                controller.sunrise,
+                forecast.sunrise,
                 style: GoogleFonts.montserrat(
                   fontWeight: FontWeight.w700,
                   color: Colors.deepOrange[50],
                 ),
               ),
               Text(
-                controller.sunset,
+                forecast.sunset,
                 style: GoogleFonts.montserrat(
                   fontWeight: FontWeight.w700,
                   color: Colors.deepOrange[50],
@@ -291,27 +291,29 @@ class SunrisePainter extends CustomPainter {
     canvas.drawPath(path, trackPaint);
 
     if (progress >= 0.0 && progress <= 1.0) {
-      final sunPaint = Paint()
-        ..color = Colors.deepOrange[50]!
-        ..style = PaintingStyle.fill;
+      if (progress >= 0.0 && progress <= 1.0) {
+        final sunPaint = Paint()
+          ..color = Colors.deepOrange[50]!
+          ..style = PaintingStyle.fill;
 
-      final sunGlow = Paint()
-        ..color = Colors.white.withValues(alpha: 0.4)
-        ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+        final sunGlow = Paint()
+          ..color = Colors.white.withValues(alpha: 0.4)
+          ..style = PaintingStyle.fill
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-      double t = progress;
-      double x =
-          (1 - t) * (1 - t) * startX +
-          2 * (1 - t) * t * (size.width / 2) +
-          t * t * endX;
-      double y =
-          (1 - t) * (1 - t) * baseY +
-          2 * (1 - t) * t * (-size.height * 0.15) +
-          t * t * baseY;
+        double t = progress;
+        double x =
+            (1 - t) * (1 - t) * startX +
+            2 * (1 - t) * t * (size.width / 2) +
+            t * t * endX;
+        double y =
+            (1 - t) * (1 - t) * baseY +
+            2 * (1 - t) * t * (-size.height * 0.15) +
+            t * t * baseY;
 
-      canvas.drawCircle(Offset(x, y), 10, sunGlow);
-      canvas.drawCircle(Offset(x, y), 5, sunPaint);
+        canvas.drawCircle(Offset(x, y), 12, sunGlow);
+        canvas.drawCircle(Offset(x, y), 6, sunPaint);
+      }
     }
   }
 
