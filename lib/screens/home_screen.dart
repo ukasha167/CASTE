@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return Column(
                         children: [
                           Expanded(
-                            flex: 57,
+                            flex: 58,
                             child: Align(
                               alignment: Alignment.topLeft,
                               child: SizedBox(
@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Expanded(
-                            flex: 43,
+                            flex: 42,
                             child: HourlySection(
                               data: _controller.hourlyData,
                             ),
@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 5),
                 Padding(
                   padding: const EdgeInsets.only(left: 30, right: 30, bottom: 30, top: 10),
                   child: ListenableBuilder(
