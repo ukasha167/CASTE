@@ -315,10 +315,12 @@ class WeatherController extends ChangeNotifier {
 
   String _formatTime(DateTime time) {
     int h = time.hour;
+    int m = time.minute;
     String ampm = h >= 12 ? "PM" : "AM";
     h = h % 12;
     if (h == 0) h = 12;
-    return "$h $ampm";
+    String mm = m.toString().padLeft(2, '0');
+    return "$h:$mm $ampm";
   }
 
   String _mapWeatherCode(int code) {
