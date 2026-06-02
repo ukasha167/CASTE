@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'dart:async';
 import '../controllers/weather_controller.dart';
 import '../widgets/at_glance.dart';
 import '../widgets/hourly_data.dart';
@@ -11,26 +12,70 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<StatefulWidget> createState() {
-    return _HomeScreenState();
-  }
+  State<StatefulWidget> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isSearching = false;
-
   final WeatherController _controller = WeatherController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  Timer? _fadeTimer;
+  bool _showDots = true;
+  bool _hasBounced = false;
+
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+  bool _isSearching = false;
+
   @override
   void dispose() {
+    _pageController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
-  Widget _buildWeatherView(double availableHeight) {
+  void _startFadeTimer() {
+    _fadeTimer?.cancel();
+    setState(() => _showDots = true);
+    _fadeTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _showDots = false);
+    });
+  }
+
+  // Executes the physical "peek" animation with Apple-standard fluid dynamics
+  void _triggerBounceHint() {
+    if (_hasBounced) return;
+    _hasBounced = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      if (_pageController.hasClients) {
+        // 1. THE PULL: Mimics a human thumb dragging the page.
+        // easeOutQuad starts fast and smoothly decelerates as it reaches peak tension.
+        await _pageController.animateTo(
+          65.0,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeOutQuad,
+        );
+
+        // 2. THE SNAP: Mimics the thumb letting go.
+        // easeOutBack forces the controller to mathematically overshoot 0.0 into
+        // negative space, which naturally strikes the BouncingScrollPhysics wall
+        // and triggers the flawless iOS rubber-band settle.
+        await _pageController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutBack,
+        );
+
+        _startFadeTimer();
+      }
+    });
+  }
+
+  Widget _buildWeatherPage(double availableHeight, DailyForecast forecast) {
     return CustomScrollView(
-      key: const ValueKey('weather_view'),
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
@@ -38,19 +83,35 @@ class _HomeScreenState extends State<HomeScreen> {
         CupertinoSliverRefreshControl(
           onRefresh: () async {
             await _controller.refreshWeather();
+            // Snap back to Day 0 if pulled from a future day
+            if (_currentPage != 0) {
+              _pageController.animateToPage(
+                0,
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutCubic,
+              );
+            }
           },
-          builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
-            final double opacity = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
-            return Center(
-              child: Opacity(
-                opacity: opacity,
-                child: CupertinoActivityIndicator(
-                  color: Colors.deepOrange[50],
-                  radius: 15,
-                ),
-              ),
-            );
-          },
+          builder:
+              (
+                context,
+                refreshState,
+                pulledExtent,
+                refreshTriggerPullDistance,
+                refreshIndicatorExtent,
+              ) {
+                final double opacity =
+                    (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
+                return Center(
+                  child: Opacity(
+                    opacity: opacity,
+                    child: CupertinoActivityIndicator(
+                      color: Colors.deepOrange[50],
+                      radius: 15,
+                    ),
+                  ),
+                );
+              },
         ),
         SliverToBoxAdapter(
           child: Column(
@@ -59,51 +120,43 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(
                 height: availableHeight,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  child: ListenableBuilder(
-                    listenable: _controller,
-                    builder: (context, child) {
-                      return Column(
-                        children: [
-                          Expanded(
-                            flex: 58,
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: AtGlance(
-                                  city: _controller.city,
-                                  day: _controller.day,
-                                  temp: _controller.temp,
-                                  msg: _controller.msg,
-                                  tempRange: _controller.tempRange,
-                                  wind: _controller.wind,
-                                  humidity: _controller.humidity,
-                                ),
-                              ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 15,
+                  ),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        flex: 57,
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: AtGlance(
+                              forecast: forecast,
+                              city: _controller.city,
                             ),
                           ),
-                          Expanded(
-                            flex: 42,
-                            child: HourlySection(
-                              data: _controller.hourlyData,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                        ),
+                      ),
+                      Expanded(
+                        flex: 43,
+                        child: HourlySection(data: forecast.hourlyData),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 5),
-                Padding(
-                  padding: const EdgeInsets.only(left: 30, right: 30, bottom: 30, top: 10),
-                  child: ListenableBuilder(
-                    listenable: _controller,
-                    builder: (context, _) => DetailedMetrics(controller: _controller),
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 30,
+                  right: 30,
+                  bottom: 30,
+                  top: 10,
                 ),
-                const SizedBox(height: 20),
+                child: DetailedMetrics(forecast: forecast),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -114,9 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    if (screenHeight <= 0) {
-      return const Scaffold();
-    }
+    if (screenHeight <= 0) return const Scaffold();
 
     final myAppBar = AppBar(
       backgroundColor: Colors.transparent,
@@ -125,9 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
       leading: Padding(
         padding: const EdgeInsets.only(left: 25),
         child: IconButton(
-          onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
-          },
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           icon: const Icon(Icons.menu, size: 26, weight: 700),
           color: Colors.deepOrange[50],
         ),
@@ -144,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(
               _isSearching ? CupertinoIcons.clear : Icons.search,
               size: 26,
-              weight: 700
+              weight: 700,
             ),
             color: Colors.deepOrange[50],
           ),
@@ -162,11 +211,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: myAppBar,
+      drawerScrimColor: Colors.black.withValues(alpha: 0.4),
       drawer: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) => SettingsDrawer(controller: _controller),
       ),
-      drawerScrimColor: Colors.black.withValues(alpha: 0.5),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         switchInCurve: Curves.easeOutCubic,
@@ -188,10 +237,77 @@ class _HomeScreenState extends State<HomeScreen> {
                 key: const ValueKey('search_view'),
                 controller: _controller,
                 onCitySelected: () {
-                  setState(() => _isSearching = false);
+                  setState(() {
+                    _isSearching = false;
+                    _currentPage = 0;
+                  });
                 },
               )
-            : _buildWeatherView(availableHeight),
+            : ListenableBuilder(
+                key: const ValueKey('weather_view'),
+                listenable: _controller,
+                builder: (context, child) {
+                  if (_controller.forecasts.isEmpty)
+                    return const SizedBox.shrink();
+
+                  _triggerBounceHint();
+
+                  return Stack(
+                    children: [
+                      // 1. The main swiper
+                      PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          setState(() => _currentPage = index);
+                          _startFadeTimer(); // Keep dots visible while swiping
+                        },
+                        itemCount: _controller.forecasts.length,
+                        itemBuilder: (context, index) {
+                          return _buildWeatherPage(
+                            availableHeight,
+                            _controller.forecasts[index],
+                          );
+                        },
+                      ),
+
+                      Positioned(
+                        top: 10,
+                        left: 0,
+                        right: 0,
+                        child: IgnorePointer(
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 500),
+                            opacity: _showDots ? 1.0 : 0.0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                _controller.forecasts.length,
+                                (index) => AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutCubic,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 3,
+                                  ),
+                                  width: _currentPage == index ? 12 : 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: _currentPage == index
+                                        ? Colors.deepOrange[50]!.withValues(
+                                            alpha: 0.8,
+                                          )
+                                        : Colors.white.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
       ),
     );
   }
