@@ -53,14 +53,21 @@ class AtGlance extends StatelessWidget {
                 letterSpacing: 3,
               ),
             ),
-            Text(
-              temp,
-              style: GoogleFonts.montserrat(
-                fontWeight: FontWeight.w900,
-                fontSize: screenHeight * 0.23,
-                color: Colors.deepOrange[50],
-                letterSpacing: 1,
-                height: 1.0,
+            SizedBox(
+              height: screenHeight * 0.23,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
+                child: Text(
+                  temp,
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.w900,
+                    fontSize: screenHeight * 0.23,
+                    color: Colors.deepOrange[50],
+                    letterSpacing: 1,
+                    height: 1.0,
+                  ),
+                ),
               ),
             ),
             Row(
