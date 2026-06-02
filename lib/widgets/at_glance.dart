@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../controllers/weather_controller.dart';
 
 class AtGlance extends StatelessWidget {
+  final DailyForecast forecast;
   final String city;
-  final String day;
-  final String temp;
-  final String tempRange;
-  final String msg;
-  final String wind;
-  final String humidity;
 
-  const AtGlance({
-    required this.city,
-    required this.day,
-    required this.temp,
-    required this.tempRange,
-    required this.msg,
-    required this.wind,
-    required this.humidity,
-    super.key,
-  });
+  const AtGlance({required this.forecast, required this.city, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +32,7 @@ class AtGlance extends StatelessWidget {
               ),
             ),
             Text(
-              day,
+              forecast.dayString,
               style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w700,
                 fontSize: screenWidth * 0.055,
@@ -57,16 +44,33 @@ class AtGlance extends StatelessWidget {
               height: screenHeight * 0.23,
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                alignment: Alignment.center,
-                child: Text(
-                  temp,
-                  style: GoogleFonts.montserrat(
-                    fontWeight: FontWeight.w900,
-                    fontSize: screenHeight * 0.23,
-                    color: Colors.deepOrange[50],
-                    letterSpacing: 1,
-                    height: 1.0,
-                  ),
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      forecast.heroTemp,
+                      style: GoogleFonts.montserrat(
+                        fontWeight: FontWeight.w900,
+                        fontSize: screenHeight * 0.23,
+                        color: Colors.deepOrange[50],
+                        letterSpacing: 1,
+                        height: 1.0,
+                      ),
+                    ),
+                    if (forecast.heroLabel.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(top: screenHeight * 0.035, left: 5),
+                        child: Text(
+                          forecast.heroLabel,
+                          style: GoogleFonts.montserrat(
+                            fontWeight: FontWeight.w700,
+                            fontSize: screenWidth * 0.05,
+                            color: Colors.deepOrange[50]!.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -74,7 +78,7 @@ class AtGlance extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  msg,
+                  forecast.msg,
                   style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w700,
                     fontSize: screenWidth * 0.055,
@@ -82,7 +86,7 @@ class AtGlance extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  tempRange,
+                  forecast.tempRange,
                   style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w500,
                     fontSize: screenWidth * 0.048,
@@ -95,7 +99,7 @@ class AtGlance extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  wind,
+                  forecast.wind,
                   style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w500,
                     fontSize: screenWidth * 0.048,
@@ -103,7 +107,7 @@ class AtGlance extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  humidity,
+                  forecast.humidity,
                   style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w500,
                     fontSize: screenWidth * 0.048,
