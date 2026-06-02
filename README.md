@@ -26,7 +26,7 @@ All data is parsed from JSON and presented using custom typography for a beautif
 - [x] Manually search the location for weather
 - [x] Sliding menu for Settings like Celcius to Fahrenheit, Refresh intervals, etc.
 - [x] Detailed Metrics for the whole day
+- [x] Weather Data for future days
 
 ### Future Features
-- [ ] Weather Data for future days
 - [ ] Improve Accuracy and overall performance
