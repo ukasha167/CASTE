@@ -47,7 +47,7 @@ class HourlySection extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final rowFontSize = screenWidth * 0.042;
+    final rowFontSize = screenWidth * 0.041;
 
     return Column(
       children: data.map((hourData) {
@@ -58,13 +58,13 @@ class HourlySection extends StatelessWidget {
             children: [
               _cellText(
                 hourData["time"]!,
-                screenWidth * 0.18,
+                screenWidth * 0.20,
                 TextAlign.start,
                 rowFontSize,
               ),
               _cellText(
                 hourData["weather"]!,
-                screenWidth * 0.20,
+                screenWidth * 0.19,
                 TextAlign.start,
                 rowFontSize,
               ),
