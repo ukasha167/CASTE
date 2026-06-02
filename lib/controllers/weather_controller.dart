@@ -6,56 +6,66 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:convert';
 
+class DailyForecast {
+  final String dayString;
+  final String heroTemp;
+  final String heroLabel;
+  final String tempRange;
+  final String msg;
+  final String wind;
+  final String windSpeedOnly;
+  final String windUnitOnly;
+  final String humidity;
+  final String aqi;
+  final String aqiLabel;
+  final String uv;
+  final String uvLabel;
+  final String sunrise;
+  final String sunset;
+  final double daylightProgress;
+  final String pressure;
+  final String visibility;
+  final String cloudCover;
+  final List<Map<String, String>> hourlyData;
+
+  DailyForecast({
+    required this.dayString,
+    required this.heroTemp,
+    required this.heroLabel,
+    required this.tempRange,
+    required this.msg,
+    required this.wind,
+    required this.windSpeedOnly,
+    required this.windUnitOnly,
+    required this.humidity,
+    required this.aqi,
+    required this.aqiLabel,
+    required this.uv,
+    required this.uvLabel,
+    required this.sunrise,
+    required this.sunset,
+    required this.daylightProgress,
+    required this.pressure,
+    required this.visibility,
+    required this.cloudCover,
+    required this.hourlyData,
+  });
+}
+
 class WeatherController extends ChangeNotifier {
   int refreshMinutes = 30;
   Timer? _timer;
   SharedPreferences? _prefs;
 
+  List<DailyForecast> forecasts = [];
   String city = "Loading...";
-  String day = "Unknown Day";
-  String temp = "--˚";
-  String tempRange = "--˚ – --˚";
-  String msg = "Unknown";
-  String wind = "Wind: --km/h";
-  String humidity = "Humidity: --%";
-  String aqi = "--";
-  String aqiLabel = "Unknown";
-  String uv = "--";
-  String uvLabel = "Unknown";
-  String sunrise = "--:-- AM";
-  String sunset = "--:-- PM";
-  double daylightProgress = 0.0;
-  String pressure = "-- hPa";
-  String visibility = "-- km";
-  String cloudCover = "--%";
-  String windSpeedOnly = "--";
-  String windUnitOnly = "km/h";
-  List<Map<String, String>> hourlyData = [];
-
-  double _rawCurrentTempC = 0.0;
-  double _rawWindKmh = 0.0;
-  int _rawHumidity = 0;
-  int _rawConditionCode = 0;
-  double _rawMaxTempC = 0.0;
-  double _rawMinTempC = 0.0;
-  int _rawAqi = 0;
-  double _rawUv = 0.0;
-  String _rawSunrise = "";
-  String _rawSunset = "";
-  double _rawPressure = 0.0;
-  double _rawVisibility = 0.0;
-  int _rawCloudCover = 0;
-  List<dynamic> _rawHourlyTimes = [];
-  List<dynamic> _rawHourlyTempsC = [];
-  List<dynamic> _rawHourlyPrecip = [];
-  List<dynamic> _rawHourlyCodes = [];
-
   bool isCelsius = true;
   bool isMetric = true;
 
-  Position? position;
   double lati = 0.0;
   double long = 0.0;
+  Map<String, dynamic> _rawWeatherCache = {};
+  Map<String, dynamic> _rawAqiCache = {};
 
   final List<String> _weekdays = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
@@ -66,12 +76,11 @@ class WeatherController extends ChangeNotifier {
   ];
 
   WeatherController() {
-    day = _getDay();
     _initPrefsAndLoad();
-
-    _timer = Timer.periodic(Duration(minutes: refreshMinutes), (timer) {
-      _getLocation();
-    });
+    _timer = Timer.periodic(
+      Duration(minutes: refreshMinutes),
+      (_) => _getLocation(),
+    );
   }
 
   @override
@@ -82,10 +91,8 @@ class WeatherController extends ChangeNotifier {
 
   Future<void> _initPrefsAndLoad() async {
     _prefs = await SharedPreferences.getInstance();
-
     isCelsius = _prefs?.getBool('isCelsius') ?? true;
     isMetric = _prefs?.getBool('isMetric') ?? true;
-
     await _getLocation();
   }
 
@@ -93,193 +100,40 @@ class WeatherController extends ChangeNotifier {
     if (isCelsius == celsius) return;
     isCelsius = celsius;
     _prefs?.setBool('isCelsius', isCelsius);
-
-    _formatWeatherData();
+    if (_rawWeatherCache.isNotEmpty) _formatAllDays();
   }
 
   void toggleDistanceUnit(bool metric) {
     if (isMetric == metric) return;
     isMetric = metric;
     _prefs?.setBool('isMetric', isMetric);
-
-    _formatWeatherData();
+    if (_rawWeatherCache.isNotEmpty) _formatAllDays();
   }
 
-  double _convertTemp(double tempC) {
-    return isCelsius ? tempC : (tempC * 9 / 5) + 32;
-  }
-
-  double _convertSpeed(double speedKmh) {
-    return isMetric ? speedKmh : speedKmh * 0.621371;
-  }
-
-  String _getDay() {
-    final DateTime now = DateTime.now();
-    return "${_weekdays[now.weekday - 1]}–${now.day} ${_months[now.month - 1]}.";
-  }
-
-  Future<void> _fetchWeather() async {
-      final weatherUrl = Uri.parse(
-        'https://api.open-meteo.com/v1/forecast?latitude=$lati&longitude=$long'
-        '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,surface_pressure,visibility,cloud_cover,uv_index'
-        '&hourly=temperature_2m,precipitation_probability,weather_code'
-        '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset'
-        '&timezone=auto&forecast_days=2',
-      );
-
-      final aqiUrl = Uri.parse(
-        'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=$lati&longitude=$long&current=us_aqi'
-      );
-
-      try {
-        final responses = await Future.wait([
-          http.get(weatherUrl),
-          http.get(aqiUrl),
-        ]);
-
-        if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
-          final Map<String, dynamic> wJson = jsonDecode(responses[0].body);
-          final Map<String, dynamic> aJson = jsonDecode(responses[1].body);
-
-          _rawCurrentTempC = (wJson["current"]["temperature_2m"] as num).toDouble();
-          _rawHumidity = wJson["current"]["relative_humidity_2m"];
-          _rawWindKmh = (wJson["current"]['wind_speed_10m'] as num).toDouble();
-          _rawConditionCode = wJson["current"]['weather_code'];
-          _rawPressure = (wJson["current"]['surface_pressure'] as num).toDouble();
-          _rawVisibility = (wJson["current"]['visibility'] as num).toDouble();
-          _rawCloudCover = wJson["current"]['cloud_cover'];
-          _rawUv = (wJson["current"]['uv_index'] as num).toDouble();
-
-          _rawMaxTempC = (wJson['daily']['temperature_2m_max'][0] as num).toDouble();
-          _rawMinTempC = (wJson['daily']['temperature_2m_min'][0] as num).toDouble();
-          _rawSunrise = wJson['daily']['sunrise'][0];
-          _rawSunset = wJson['daily']['sunset'][0];
-
-          _rawHourlyTimes = wJson['hourly']['time'];
-          _rawHourlyTempsC = wJson['hourly']['temperature_2m'];
-          _rawHourlyPrecip = wJson['hourly']['precipitation_probability'];
-          _rawHourlyCodes = wJson['hourly']['weather_code'];
-
-          _rawAqi = aJson['current']['us_aqi'] ?? 0;
-
-          _formatWeatherData();
-        }
-      } catch (e) {
-        print("Error fetching weather/AQI: $e");
-      }
-    }
-
-    void _formatWeatherData() {
-      temp = "${_convertTemp(_rawCurrentTempC).toStringAsFixed(0)}˚";
-      tempRange = "${_convertTemp(_rawMaxTempC).toStringAsFixed(0)}˚ – ${_convertTemp(_rawMinTempC).toStringAsFixed(0)}˚";
-
-      windSpeedOnly = _convertSpeed(_rawWindKmh).toStringAsFixed(0);
-      windUnitOnly = isMetric ? "km/h" : "mph";
-      wind = "Wind: $windSpeedOnly$windUnitOnly";
-      humidity = "Humidity: $_rawHumidity%";
-      msg = _rawConditionCode >= 50 ? "Yes, It's raining" : "Enjoy your day!";
-
-      aqi = _rawAqi.toString();
-      if (_rawAqi <= 50) aqiLabel = "Good";
-      else if (_rawAqi <= 100) aqiLabel = "Moderate";
-      else if (_rawAqi <= 150) aqiLabel = "Unhealthy for Sensitive";
-      else if (_rawAqi <= 200) aqiLabel = "Unhealthy";
-      else if (_rawAqi <= 300) aqiLabel = "Very Unhealthy";
-      else aqiLabel = "Hazardous";
-
-      uv = _rawUv.toStringAsFixed(0);
-      if (_rawUv < 3) uvLabel = "Low";
-      else if (_rawUv < 6) uvLabel = "Moderate";
-      else if (_rawUv < 8) uvLabel = "High";
-      else if (_rawUv < 11) uvLabel = "Very High";
-      else uvLabel = "Extreme";
-
-      cloudCover = "$_rawCloudCover%";
-
-      pressure = isMetric ? "${_rawPressure.toStringAsFixed(0)} hPa" : "${(_rawPressure * 0.02953).toStringAsFixed(2)} inHg";
-      visibility = isMetric ? "${(_rawVisibility / 1000).toStringAsFixed(1)} km" : "${(_rawVisibility / 1609.34).toStringAsFixed(1)} mi";
-
-      if (_rawSunrise.isNotEmpty && _rawSunset.isNotEmpty) {
-        DateTime sr = DateTime.parse(_rawSunrise);
-        DateTime ss = DateTime.parse(_rawSunset);
-        DateTime now = DateTime.now();
-
-        sunrise = _formatTime(sr);
-        sunset = _formatTime(ss);
-
-        if (now.isBefore(sr)) daylightProgress = 0.0;
-        else if (now.isAfter(ss)) daylightProgress = 1.0;
-        else {
-          int totalDaylight = ss.difference(sr).inMinutes;
-          int passed = now.difference(sr).inMinutes;
-          daylightProgress = passed / totalDaylight;
-        }
-      }
-
-      List<Map<String, String>> freshHourlyList = [];
-      DateTime now = DateTime.now();
-      for (int i = 0; i < _rawHourlyTimes.length; i++) {
-        DateTime parsedTime = DateTime.parse(_rawHourlyTimes[i]);
-        if (parsedTime.isBefore(now.subtract(const Duration(minutes: 59)))) continue;
-
-        freshHourlyList.add({
-          "time": _formatTime(parsedTime),
-          "weather": _mapWeatherCode(_rawHourlyCodes[i]),
-          "precip": "• ${_rawHourlyPrecip[i]}%",
-          "temp": "${_convertTemp((_rawHourlyTempsC[i] as num).toDouble()).toStringAsFixed(0)}˚",
-        });
-
-        if (freshHourlyList.length >= 24) break;
-      }
-      hourlyData = freshHourlyList;
-      notifyListeners();
-    }
+  double _convertTemp(double tempC) => isCelsius ? tempC : (tempC * 9 / 5) + 32;
+  double _convertSpeed(double speedKmh) => isMetric ? speedKmh : speedKmh * 0.621371;
 
   Future<void> refreshWeather() async {
-    await _getLocation();
-  }
-
-  Future<Position> _getPosition() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return Future.error("Location services are disabled");
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error("Location permissions are denied");
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error("Location permissions are permanently denied");
-    }
-    return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
-    );
+    await _fetchWeather();
   }
 
   Future<void> _getLocation() async {
     try {
-      Position currentPosition = await _getPosition();
+      Position currentPosition = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+        ),
+      );
       List<Placemark> placemarks = await placemarkFromCoordinates(
         currentPosition.latitude,
         currentPosition.longitude,
       );
-
-      if (placemarks.isNotEmpty) {
-        city = placemarks[0].locality ?? placemarks[0].name ?? "Unknown Location";
-      } else {
-        city = "Unknown Location";
-      }
-
-      position = currentPosition;
+      city = placemarks.isNotEmpty ? (placemarks[0].locality ?? placemarks[0].name ?? "Unknown") : "Unknown";
       lati = currentPosition.latitude;
       long = currentPosition.longitude;
       notifyListeners();
-
       await _fetchWeather();
     } catch (e) {
-      print("Initialization failed: $e");
       city = "Permission Denied";
       notifyListeners();
     }
@@ -287,20 +141,13 @@ class WeatherController extends ChangeNotifier {
 
   Future<List<dynamic>> searchCities(String query) async {
     if (query.trim().isEmpty) return [];
-
-    final url = Uri.parse(
-      'https://geocoding-api.open-meteo.com/v1/search?name=$query&count=5&language=en&format=json'
-    );
-
     try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['results'] ?? [];
-      }
-    } catch (e) {
-      print("Geocoding API Error: $e");
-    }
+      final url = Uri.parse(
+        'https://geocoding-api.open-meteo.com/v1/search?name=$query&count=5&language=en&format=json',
+      );
+      final res = await http.get(url);
+      if (res.statusCode == 200) return jsonDecode(res.body)['results'] ?? [];
+    } catch (e) {}
     return [];
   }
 
@@ -309,18 +156,179 @@ class WeatherController extends ChangeNotifier {
     lati = latitude;
     long = longitude;
     notifyListeners();
-
     await _fetchWeather();
   }
 
-  String _formatTime(DateTime time) {
-    int h = time.hour;
-    int m = time.minute;
-    String ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12;
-    if (h == 0) h = 12;
-    String mm = m.toString().padLeft(2, '0');
-    return "$h:$mm $ampm";
+  Future<void> _fetchWeather() async {
+    final weatherUrl = Uri.parse(
+      'https://api.open-meteo.com/v1/forecast?latitude=$lati&longitude=$long'
+      '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,surface_pressure,visibility,cloud_cover'
+      '&hourly=temperature_2m,precipitation_probability,weather_code,relative_humidity_2m,wind_speed_10m,surface_pressure,visibility,cloud_cover'
+      '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max'
+      '&timezone=auto&forecast_days=7',
+    );
+    final aqiUrl = Uri.parse(
+      'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=$lati&longitude=$long&current=us_aqi&hourly=us_aqi&timezone=auto&forecast_days=7',
+    );
+
+    try {
+      final responses = await Future.wait([
+        http.get(weatherUrl),
+        http.get(aqiUrl),
+      ]);
+      if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
+        _rawWeatherCache = jsonDecode(responses[0].body);
+        _rawAqiCache = jsonDecode(responses[1].body);
+        _formatAllDays();
+      }
+    } catch (e) {}
+  }
+
+  void _formatAllDays() {
+    List<DailyForecast> generatedForecasts = [];
+    DateTime now = DateTime.now();
+
+    for (int i = 0; i < 7; i++) {
+      bool isToday = (i == 0);
+      int middayIndex = (i * 24) + 12;
+
+      DateTime date = DateTime.parse(_rawWeatherCache['daily']['time'][i]);
+      String dayStr = "${_weekdays[date.weekday - 1]}–${date.day} ${_months[date.month - 1]}.";
+
+      double tempNum = isToday
+          ? (_rawWeatherCache["current"]["temperature_2m"] as num).toDouble()
+          : (_rawWeatherCache["daily"]["temperature_2m_max"][i] as num).toDouble();
+
+      int humidityNum = isToday
+          ? _rawWeatherCache["current"]["relative_humidity_2m"]
+          : _rawWeatherCache["hourly"]["relative_humidity_2m"][middayIndex];
+
+      double windNum = isToday
+          ? (_rawWeatherCache["current"]["wind_speed_10m"] as num).toDouble()
+          : (_rawWeatherCache["hourly"]["wind_speed_10m"][middayIndex] as num).toDouble();
+
+      int codeNum = isToday
+          ? _rawWeatherCache["current"]["weather_code"]
+          : _rawWeatherCache["hourly"]["weather_code"][middayIndex];
+
+      double pressureNum = isToday
+          ? (_rawWeatherCache["current"]["surface_pressure"] as num).toDouble()
+          : (_rawWeatherCache["hourly"]["surface_pressure"][middayIndex] as num).toDouble();
+
+      double visNum = isToday
+          ? (_rawWeatherCache["current"]["visibility"] as num).toDouble()
+          : (_rawWeatherCache["hourly"]["visibility"][middayIndex] as num).toDouble();
+
+      int cloudNum = isToday
+          ? _rawWeatherCache["current"]["cloud_cover"]
+          : _rawWeatherCache["hourly"]["cloud_cover"][middayIndex];
+
+      int aqiNum = isToday
+          ? (_rawAqiCache["current"]["us_aqi"] ?? 0)
+          : (_rawAqiCache["hourly"]["us_aqi"][middayIndex] ?? 0);
+
+      double uvNum = (_rawWeatherCache["daily"]["uv_index_max"][i] as num).toDouble();
+
+      double maxT = (_rawWeatherCache["daily"]["temperature_2m_max"][i] as num).toDouble();
+      double minT = (_rawWeatherCache["daily"]["temperature_2m_min"][i] as num).toDouble();
+      String tRange = "${_convertTemp(maxT).toStringAsFixed(0)}˚ – ${_convertTemp(minT).toStringAsFixed(0)}˚";
+      String spdUnit = isMetric ? "km/h" : "mph";
+
+      String windSpeedOnly = _convertSpeed(windNum).toStringAsFixed(0);
+      String windUnitOnly = isMetric ? "km/h" : "mph";
+
+      String aLbl = "Good";
+      if (aqiNum > 50) aLbl = "Moderate";
+      if (aqiNum > 100) aLbl = "Unhealthy for Sensitive";
+      if (aqiNum > 150) aLbl = "Unhealthy";
+      if (aqiNum > 200) aLbl = "V. Unhealthy";
+
+      String uLbl = "Low";
+      if (uvNum >= 3) uLbl = "Moderate";
+      if (uvNum >= 6) uLbl = "High";
+      if (uvNum >= 8) uLbl = "Very High";
+      if (uvNum >= 11) uLbl = "Extreme";
+
+      String srStr = _rawWeatherCache['daily']['sunrise'][i];
+      String ssStr = _rawWeatherCache['daily']['sunset'][i];
+      double dlProg = -1.0;
+
+      if (isToday && srStr.isNotEmpty && ssStr.isNotEmpty) {
+        DateTime sr = DateTime.parse(srStr);
+        DateTime ss = DateTime.parse(ssStr);
+        if (now.isAfter(sr) && now.isBefore(ss)) {
+          dlProg = now.difference(sr).inMinutes / ss.difference(sr).inMinutes;
+        } else if (now.isAfter(ss)) {
+          dlProg = 1.0;
+        } else {
+          dlProg = 0.0;
+        }
+      }
+
+      List<Map<String, String>> hourlyList = [];
+      List rawTimes = _rawWeatherCache['hourly']['time'];
+
+      int startIndex = i * 24;
+      if (isToday) {
+        for (int h = 0; h < rawTimes.length; h++) {
+          DateTime t = DateTime.parse(rawTimes[h]);
+          if (t.isAfter(now.subtract(const Duration(minutes: 59)))) {
+            startIndex = h;
+            break;
+          }
+        }
+      }
+
+      for (int h = startIndex; h < startIndex + 24; h++) {
+        if (h >= rawTimes.length) break;
+
+        DateTime t = DateTime.parse(rawTimes[h]);
+        int hr = t.hour;
+        String ampm = hr >= 12 ? "PM" : "AM";
+        hr = hr % 12;
+        if (hr == 0) hr = 12;
+
+        hourlyList.add({
+          "time": "${hr.toString().padLeft(2, '0')} $ampm",
+          "weather": _mapWeatherCode(
+            _rawWeatherCache['hourly']['weather_code'][h],
+          ),
+          "precip": "• ${_rawWeatherCache['hourly']['precipitation_probability'][h]}%",
+          "temp": "${_convertTemp((_rawWeatherCache['hourly']['temperature_2m'][h] as num).toDouble()).toStringAsFixed(0)}˚",
+        });
+      }
+
+      generatedForecasts.add(
+        DailyForecast(
+          dayString: dayStr,
+          heroTemp: "${_convertTemp(tempNum).toStringAsFixed(0)}˚",
+          heroLabel: isToday ? "" : "High",
+          tempRange: tRange,
+          msg: codeNum >= 50 ? "Yes, It's raining" : "Enjoy your day!",
+          wind: "Wind: ${_convertSpeed(windNum).toStringAsFixed(0)}$spdUnit",
+          windSpeedOnly: windSpeedOnly,
+          windUnitOnly: windUnitOnly,
+          humidity: "Humidity: $humidityNum%",
+          aqi: aqiNum.toString(),
+          aqiLabel: aLbl,
+          uv: uvNum.toStringAsFixed(0),
+          uvLabel: uLbl,
+          sunrise: _formatTime(DateTime.parse(srStr)),
+          sunset: _formatTime(DateTime.parse(ssStr)),
+          daylightProgress: dlProg,
+          pressure: isMetric
+              ? "${pressureNum.toStringAsFixed(0)} hPa"
+              : "${(pressureNum * 0.02953).toStringAsFixed(2)} inHg",
+          visibility: isMetric
+              ? "${(visNum / 1000).toStringAsFixed(1)} km"
+              : "${(visNum / 1609.34).toStringAsFixed(1)} mi",
+          cloudCover: "$cloudNum%",
+          hourlyData: hourlyList,
+        ),
+      );
+    }
+    forecasts = generatedForecasts;
+    notifyListeners();
   }
 
   String _mapWeatherCode(int code) {
@@ -329,5 +337,13 @@ class WeatherController extends ChangeNotifier {
     if (code >= 45 && code <= 48) return "Foggy";
     if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "Rainy";
     return "Cloudy";
+  }
+
+  String _formatTime(DateTime time) {
+    int h = time.hour;
+    String ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    if (h == 0) h = 12;
+    return "$h:${time.minute.toString().padLeft(2, '0')} $ampm";
   }
 }
