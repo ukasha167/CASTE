@@ -291,29 +291,27 @@ class SunrisePainter extends CustomPainter {
     canvas.drawPath(path, trackPaint);
 
     if (progress >= 0.0 && progress <= 1.0) {
-      if (progress >= 0.0 && progress <= 1.0) {
-        final sunPaint = Paint()
-          ..color = Colors.deepOrange[50]!
-          ..style = PaintingStyle.fill;
+      final sunPaint = Paint()
+        ..color = Colors.deepOrange[50]!
+        ..style = PaintingStyle.fill;
 
-        final sunGlow = Paint()
-          ..color = Colors.white.withValues(alpha: 0.4)
-          ..style = PaintingStyle.fill
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      final sunGlow = Paint()
+        ..color = Colors.white.withValues(alpha: 0.4)
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-        double t = progress;
-        double x =
-            (1 - t) * (1 - t) * startX +
-            2 * (1 - t) * t * (size.width / 2) +
-            t * t * endX;
-        double y =
-            (1 - t) * (1 - t) * baseY +
-            2 * (1 - t) * t * (-size.height * 0.15) +
-            t * t * baseY;
+      double t = progress;
+      double x =
+          (1 - t) * (1 - t) * startX +
+          2 * (1 - t) * t * (size.width / 2) +
+          t * t * endX;
+      double y =
+          (1 - t) * (1 - t) * baseY +
+          2 * (1 - t) * t * (-size.height * 0.15) +
+          t * t * baseY;
 
-        canvas.drawCircle(Offset(x, y), 12, sunGlow);
-        canvas.drawCircle(Offset(x, y), 6, sunPaint);
-      }
+      canvas.drawCircle(Offset(x, y), 12, sunGlow);
+      canvas.drawCircle(Offset(x, y), 6, sunPaint);
     }
   }
 
