@@ -105,6 +105,40 @@ class _CitySearchState extends State<CitySearch> {
                 ),
               ),
             )
+          else if (_textController.text.trim().isEmpty)
+            Expanded(
+              child: ListView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.zero,
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.only(left: 15),
+                    horizontalTitleGap: 12,
+                    leading: Icon(
+                      CupertinoIcons.location_fill,
+                      color: Colors.deepOrange[50],
+                      size: 22,
+                    ),
+                    title: Text(
+                      "Use Current Location",
+                      style: GoogleFonts.montserrat(
+                        color: Colors.deepOrange[50],
+                        fontWeight: FontWeight.w600,
+                        fontSize: screenWidth * 0.045,
+                      ),
+                    ),
+                    onTap: () {
+                      widget.controller.retryGPSLocation();
+                      widget.onCitySelected();
+                    },
+                  ),
+                  Divider(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    height: 1,
+                  ),
+                ],
+              ),
+            )
           else
             Expanded(
               child: ListView.separated(
