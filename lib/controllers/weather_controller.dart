@@ -131,6 +131,28 @@ class WeatherController extends ChangeNotifier {
     await _fetchWeather();
   }
 
+  Future<void> retryGPSLocation() async {
+    isLoading = true;
+    forecasts = [];
+    notifyListeners();
+
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.deniedForever) {
+        await Geolocator.openAppSettings();
+        isLoading = false;
+        notifyListeners();
+        return;
+      }
+      await _getLocation();
+    } catch (e) {
+      print("Retry failed: $e");
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<Position> _handleLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return Future.error("Location services disabled");
