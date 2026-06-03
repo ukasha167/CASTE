@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../controllers/weather_controller.dart';
 import '../widgets/at_glance.dart';
@@ -37,12 +38,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _startFadeTimer() {
     _fadeTimer?.cancel();
     setState(() => _showDots = true);
-    _fadeTimer = Timer(const Duration(seconds: 3), () {
+    _fadeTimer = Timer(const Duration(seconds: 2), () {
       if (mounted) setState(() => _showDots = false);
     });
   }
 
-  // Executes the physical "peek" animation with Apple-standard fluid dynamics
   void _triggerBounceHint() {
     if (_hasBounced) return;
     _hasBounced = true;
@@ -51,18 +51,12 @@ class _HomeScreenState extends State<HomeScreen> {
       await Future.delayed(const Duration(milliseconds: 1000));
 
       if (_pageController.hasClients) {
-        // 1. THE PULL: Mimics a human thumb dragging the page.
-        // easeOutQuad starts fast and smoothly decelerates as it reaches peak tension.
         await _pageController.animateTo(
           65.0,
           duration: const Duration(milliseconds: 800),
           curve: Curves.easeOutQuad,
         );
 
-        // 2. THE SNAP: Mimics the thumb letting go.
-        // easeOutBack forces the controller to mathematically overshoot 0.0 into
-        // negative space, which naturally strikes the BouncingScrollPhysics wall
-        // and triggers the flawless iOS rubber-band settle.
         await _pageController.animateTo(
           0.0,
           duration: const Duration(milliseconds: 500),
@@ -83,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
         CupertinoSliverRefreshControl(
           onRefresh: () async {
             await _controller.refreshWeather();
-            // Snap back to Day 0 if pulled from a future day
             if (_currentPage != 0) {
               _pageController.animateToPage(
                 0,
@@ -247,19 +240,56 @@ class _HomeScreenState extends State<HomeScreen> {
                 key: const ValueKey('weather_view'),
                 listenable: _controller,
                 builder: (context, child) {
-                  if (_controller.forecasts.isEmpty)
-                    return const SizedBox.shrink();
+                  if (_controller.forecasts.isEmpty) {
+                    if (_controller.isLoading) {
+                      final loadingForecast = DailyForecast(
+                        dayString: "Loading...",
+                        heroTemp: "--˚",
+                        heroLabel: "",
+                        tempRange: "--˚ – --˚",
+                        msg: "Fetching local weather...",
+                        wind: "Wind: -- km/h",
+                        windSpeedOnly: "--",
+                        windUnitOnly: "",
+                        humidity: "Humidity: --%",
+                        aqi: "--",
+                        aqiLabel: "Loading",
+                        uv: "--",
+                        uvLabel: "Loading",
+                        sunrise: "--:-- AM",
+                        sunset: "--:-- PM",
+                        daylightProgress: 0.0,
+                        pressure: "-- hPa",
+                        visibility: "-- km",
+                        cloudCover: "--%",
+                        hourlyData: [],
+                      );
+                      return _buildWeatherPage(availableHeight, loadingForecast);
+
+                    } else {
+                      return Center(
+                        child: Text(
+                          "Tap the search icon to\nfind your city",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            color: Colors.deepOrange[50]!.withValues(alpha: 0.7),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }
+                  }
 
                   _triggerBounceHint();
 
                   return Stack(
                     children: [
-                      // 1. The main swiper
                       PageView.builder(
                         controller: _pageController,
                         onPageChanged: (index) {
                           setState(() => _currentPage = index);
-                          _startFadeTimer(); // Keep dots visible while swiping
+                          _startFadeTimer();
                         },
                         itemCount: _controller.forecasts.length,
                         itemBuilder: (context, index) {
