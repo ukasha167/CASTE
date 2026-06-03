@@ -330,10 +330,8 @@ class WeatherController extends ChangeNotifier {
         DateTime ss = DateTime.parse(ssStr);
         if (now.isAfter(sr) && now.isBefore(ss)) {
           dlProg = now.difference(sr).inMinutes / ss.difference(sr).inMinutes;
-        } else if (now.isAfter(ss)) {
-          dlProg = 1.0;
         } else {
-          dlProg = 0.0;
+          dlProg = -1.0;
         }
       }
 
