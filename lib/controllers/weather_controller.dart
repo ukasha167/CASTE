@@ -54,6 +54,7 @@ class DailyForecast {
 
 class WeatherController extends ChangeNotifier {
   int refreshMinutes = 30;
+  bool isLoading = true;
   Timer? _timer;
   SharedPreferences? _prefs;
 
@@ -93,7 +94,20 @@ class WeatherController extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
     isCelsius = _prefs?.getBool('isCelsius') ?? true;
     isMetric = _prefs?.getBool('isMetric') ?? true;
-    await _getLocation();
+
+    final savedCity = _prefs?.getString('city');
+    final savedLati = _prefs?.getDouble('lati');
+    final savedLong = _prefs?.getDouble('long');
+
+    if (savedCity != null && savedLati != null && savedLong != null) {
+      city = savedCity;
+      lati = savedLati;
+      long = savedLong;
+      notifyListeners();
+      await _fetchWeather();
+    } else {
+      await _getLocation();
+    }
   }
 
   void toggleTempUnit(bool celsius) {
@@ -117,24 +131,55 @@ class WeatherController extends ChangeNotifier {
     await _fetchWeather();
   }
 
+  Future<Position> _handleLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return Future.error("Location services disabled");
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error("Location permissions denied");
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error("Location permissions permanently denied");
+    }
+
+    return await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+    );
+  }
+
   Future<void> _getLocation() async {
     try {
-      Position currentPosition = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
-        ),
-      );
+      Position currentPosition = await _handleLocationPermission();
+
       List<Placemark> placemarks = await placemarkFromCoordinates(
         currentPosition.latitude,
         currentPosition.longitude,
       );
-      city = placemarks.isNotEmpty ? (placemarks[0].locality ?? placemarks[0].name ?? "Unknown") : "Unknown";
+
+      city = placemarks.isNotEmpty
+          ? (placemarks[0].locality ?? placemarks[0].name ?? "Unknown")
+          : "Unknown";
       lati = currentPosition.latitude;
       long = currentPosition.longitude;
+
+      _prefs?.setString('city', city);
+      _prefs?.setDouble('lati', lati);
+      _prefs?.setDouble('long', long);
+
       notifyListeners();
       await _fetchWeather();
+
     } catch (e) {
-      city = "Permission Denied";
+      print("Location fetch failed/denied: $e. Prompting manual search.");
+
+      city = "Search City ↗";
+      forecasts = [];
+
+      isLoading = false;
       notifyListeners();
     }
   }
@@ -155,6 +200,11 @@ class WeatherController extends ChangeNotifier {
     city = cityName;
     lati = latitude;
     long = longitude;
+
+    _prefs?.setString('city', city);
+    _prefs?.setDouble('lati', lati);
+    _prefs?.setDouble('long', long);
+
     notifyListeners();
     await _fetchWeather();
   }
@@ -241,7 +291,7 @@ class WeatherController extends ChangeNotifier {
       if (aqiNum > 50) aLbl = "Moderate";
       if (aqiNum > 100) aLbl = "Unhealthy for Sensitive";
       if (aqiNum > 150) aLbl = "Unhealthy";
-      if (aqiNum > 200) aLbl = "V. Unhealthy";
+      if (aqiNum > 200) aLbl = "Very Unhealthy";
 
       String uLbl = "Low";
       if (uvNum >= 3) uLbl = "Moderate";
@@ -302,7 +352,7 @@ class WeatherController extends ChangeNotifier {
         DailyForecast(
           dayString: dayStr,
           heroTemp: "${_convertTemp(tempNum).toStringAsFixed(0)}˚",
-          heroLabel: isToday ? "" : "High",
+          heroLabel: isToday ? "" : "Max",
           tempRange: tRange,
           msg: codeNum >= 50 ? "Yes, It's raining" : "Enjoy your day!",
           wind: "Wind: ${_convertSpeed(windNum).toStringAsFixed(0)}$spdUnit",
@@ -328,6 +378,7 @@ class WeatherController extends ChangeNotifier {
       );
     }
     forecasts = generatedForecasts;
+    isLoading = false;
     notifyListeners();
   }
 
