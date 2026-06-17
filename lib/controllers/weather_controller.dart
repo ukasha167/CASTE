@@ -256,15 +256,24 @@ class WeatherController extends ChangeNotifier {
     } catch (e) {}
   }
 
+  DateTime _parseTargetTime(String timeStr) {
+    if (timeStr.length == 10) {
+      return DateTime.parse("${timeStr}T00:00:00Z");
+    }
+    return DateTime.parse("${timeStr}Z");
+  }
+
   void _formatAllDays() {
     List<DailyForecast> generatedForecasts = [];
-    DateTime now = DateTime.now();
+
+    int offsetSeconds = _rawWeatherCache['utc_offset_seconds'] ?? 0;
+    DateTime targetNow = DateTime.now().toUtc().add(Duration(seconds: offsetSeconds));
 
     for (int i = 0; i < 7; i++) {
       bool isToday = (i == 0);
       int middayIndex = (i * 24) + 12;
 
-      DateTime date = DateTime.parse(_rawWeatherCache['daily']['time'][i]);
+      DateTime date = _parseTargetTime(_rawWeatherCache['daily']['time'][i]);
       String dayStr = "${_weekdays[date.weekday - 1]}–${date.day} ${_months[date.month - 1]}.";
 
       double tempNum = isToday
@@ -326,10 +335,10 @@ class WeatherController extends ChangeNotifier {
       double dlProg = -1.0;
 
       if (isToday && srStr.isNotEmpty && ssStr.isNotEmpty) {
-        DateTime sr = DateTime.parse(srStr);
-        DateTime ss = DateTime.parse(ssStr);
-        if (now.isAfter(sr) && now.isBefore(ss)) {
-          dlProg = now.difference(sr).inMinutes / ss.difference(sr).inMinutes;
+        DateTime sr = _parseTargetTime(srStr);
+        DateTime ss = _parseTargetTime(ssStr);
+        if (targetNow.isAfter(sr) && targetNow.isBefore(ss)) {
+          dlProg = targetNow.difference(sr).inMinutes / ss.difference(sr).inMinutes;
         } else {
           dlProg = -1.0;
         }
@@ -341,8 +350,8 @@ class WeatherController extends ChangeNotifier {
       int startIndex = i * 24;
       if (isToday) {
         for (int h = 0; h < rawTimes.length; h++) {
-          DateTime t = DateTime.parse(rawTimes[h]);
-          if (t.isAfter(now.subtract(const Duration(minutes: 59)))) {
+          DateTime t = _parseTargetTime(rawTimes[h]);
+          if (t.isAfter(targetNow.subtract(const Duration(minutes: 59)))) {
             startIndex = h;
             break;
           }
@@ -352,7 +361,7 @@ class WeatherController extends ChangeNotifier {
       for (int h = startIndex; h < startIndex + 24; h++) {
         if (h >= rawTimes.length) break;
 
-        DateTime t = DateTime.parse(rawTimes[h]);
+        DateTime t = _parseTargetTime(rawTimes[h]);
         int hr = t.hour;
         String ampm = hr >= 12 ? "PM" : "AM";
         hr = hr % 12;
@@ -383,8 +392,8 @@ class WeatherController extends ChangeNotifier {
           aqiLabel: aLbl,
           uv: uvNum.toStringAsFixed(0),
           uvLabel: uLbl,
-          sunrise: _formatTime(DateTime.parse(srStr)),
-          sunset: _formatTime(DateTime.parse(ssStr)),
+          sunrise: _formatTime(_parseTargetTime(srStr)),
+          sunset: _formatTime(_parseTargetTime(ssStr)),
           daylightProgress: dlProg,
           pressure: isMetric
               ? "${pressureNum.toStringAsFixed(0)} hPa"
@@ -397,6 +406,7 @@ class WeatherController extends ChangeNotifier {
         ),
       );
     }
+
     forecasts = generatedForecasts;
     isLoading = false;
     notifyListeners();
