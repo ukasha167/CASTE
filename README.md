@@ -1,4 +1,4 @@
-# CASTE
+# CAST
 
 Flutter-based mobile application designed to provide accurate, real-time weather updates based on your current location. Built with a clean and modern user interface, the application instantly delivers vital meteorological data, helping you plan your day with confidence.
 
